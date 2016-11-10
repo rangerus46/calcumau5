@@ -7,10 +7,12 @@ import com.twitter.finagle.Http
 import com.twitter.util.Await
 import me.tomaszwojcik.calcumau5.http.ServicesModule
 import me.tomaszwojcik.calcumau5.msg.MsgModule
+import me.tomaszwojcik.calcumau5.worker.WorkerModule
 
 object Server extends App
   with ServicesModule
-  with MsgModule {
+  with MsgModule
+  with WorkerModule {
 
   def main(): Unit = {
     val address = new InetSocketAddress(Config.Http.Port)

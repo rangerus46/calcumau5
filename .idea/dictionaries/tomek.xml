@@ -1,7 +1,10 @@
 <component name="ProjectDictionaryState">
   <dictionary name="tomek">
     <words>
+      <w>addr</w>
       <w>macwire</w>
+      <w>unpickle</w>
+      <w>unpickler</w>
     </words>
   </dictionary>
 </component>

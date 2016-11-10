@@ -11,6 +11,8 @@ object Dependencies {
 
   val finagleVersion = "6.39.0"
 
+  val picklingVersion = "0.10.1"
+
   // Libraries
   val macwire = "com.softwaremill.macwire" %% "macros" % macwireVersion
 
@@ -22,7 +24,9 @@ object Dependencies {
   val finagleCore = "com.twitter" %% "finagle-core" % finagleVersion
   val finagleHttp = "com.twitter" %% "finagle-http" % finagleVersion
 
+  val pickling = "org.scala-lang.modules" % "scala-pickling_2.11" % picklingVersion
+
   // Projects
   val jobDeps = Seq(slf4jApi)
-  val serverDeps = Seq(macwire, config, slf4jApi, logback, finagleCore, finagleHttp)
+  val serverDeps = Seq(macwire, config, slf4jApi, logback, finagleCore, finagleHttp, pickling)
 }
