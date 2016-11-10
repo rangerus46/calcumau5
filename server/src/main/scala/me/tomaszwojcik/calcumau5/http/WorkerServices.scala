@@ -13,25 +13,34 @@ import scala.pickling.static._
 import scala.pickling.Defaults._
 import scala.pickling.json._
 
+case class WorkerDto(address: String) {
+  def toWorker = Worker(address, isConnected = false)
+}
+
 class WorkerServices(
   private val workerStore: WorkerStore) extends Logging {
 
-  implicit val workerUnpickler: Unpickler[Worker] = Unpickler.generate[Worker]
+  implicit val workerDtoUnpickler: Unpickler[WorkerDto] = Unpickler.generate[WorkerDto]
 
   def register(): Service[Req, Res] = new Service[Req, Res] {
-    override def apply(req: Req): Future[Res] = Future {
-      try {
-        val worker = req
-          .withInputStream(Source.fromInputStream)
+    override def apply(req: Req): Future[Res] = {
+      Future {
+        req.withInputStream(Source.fromInputStream)
           .mkString
-          .unpickle[Worker]
-
-        workerStore.register(worker)
-
-        log.info("Registering a new worker: {}", worker.toString)
-        Res(Created)
-      } catch {
-        case e: Exception =>
+          .unpickle[WorkerDto]
+      } flatMap {
+        _.toWorker.checkConnection()
+      } map { worker =>
+        if (worker.isConnected) {
+          log.info("Registering a new worker: {}", worker.toString)
+          workerStore.save(worker)
+          Res(Created)
+        } else {
+          log.error("Failed to connect to the worker at {}", worker.address)
+          Res(BadRequest)
+        }
+      } handle {
+        case e: Throwable =>
           log.error("Failed to create a worker", e)
           Res(BadRequest)
       }

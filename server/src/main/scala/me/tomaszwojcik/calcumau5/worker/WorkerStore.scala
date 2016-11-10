@@ -10,11 +10,12 @@ import scala.collection.mutable
 class WorkerStore extends Logging {
   private val workersByAddress = new mutable.HashMap[String, Worker]
 
-  def register(worker: Worker): Unit = synchronized {
+  def save(worker: Worker): Unit = synchronized {
+    workersByAddress.remove(worker.address)
     workersByAddress.put(worker.address, worker)
   }
 
-  def unregister(addr: String): Option[Worker] = synchronized {
-    workersByAddress.remove(addr)
+  def delete(worker: Worker): Option[Worker] = synchronized {
+    workersByAddress.remove(worker.address)
   }
 }
