@@ -1,5 +1,6 @@
 package me.tomaszwojcik.calcumau5.worker
 
+import com.twitter.finagle.http.Status.Successful
 import com.twitter.finagle.http.{Request => Req, Response => Res}
 import com.twitter.finagle.{Http, Service}
 import com.twitter.util.Future
@@ -17,8 +18,10 @@ case class Worker(
   }
 
   def checkConnection(): Future[Worker] = mkService { service =>
-    service(HealthServices.PingReq) map { _ =>
-      copy(isConnected = true)
+    service(HealthServices.PingReq) map {
+      _.status match {
+        case Successful(_) => copy(isConnected = true)
+      }
     } handle {
       case _ => copy(isConnected = false)
     }

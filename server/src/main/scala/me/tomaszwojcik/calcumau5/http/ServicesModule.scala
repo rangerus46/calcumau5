@@ -13,8 +13,11 @@ trait ServicesModule {
   private lazy val workerServices: WorkerServices = wire[WorkerServices]
   private lazy val jobServices: JobServices = wire[JobServices]
   private lazy val messageServices: MsgServices = wire[MsgServices]
+  private lazy val healthServices: HealthServices = wire[HealthServices]
 
   lazy val routingService = RoutingService.byMethodAndPathObject {
+    case Get -> Root / "health" / "ping" => healthServices.respondToPing()
+
     case Post -> Root / "workers" => workerServices.register()
 
     case Get -> Root / "jobs" => jobServices.list()
