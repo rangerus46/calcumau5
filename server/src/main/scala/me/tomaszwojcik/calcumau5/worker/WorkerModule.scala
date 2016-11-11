@@ -4,4 +4,5 @@ import com.softwaremill.macwire.wire
 
 trait WorkerModule {
   implicit lazy val workerStore = wire[WorkerStore]
+  lazy val workerServlet = wire[WorkerServlet]
 }

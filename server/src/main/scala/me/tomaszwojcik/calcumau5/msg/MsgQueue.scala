@@ -1,8 +1,7 @@
 package me.tomaszwojcik.calcumau5.msg
 
-import com.twitter.util.{Future, Promise}
-
 import scala.collection.mutable
+import scala.concurrent.{Future, Promise}
 
 /**
   * Asynchronous thread-safe FIFO message queue.
@@ -20,7 +19,7 @@ class MsgQueue {
     if (promises.isEmpty) {
       messages += msg
     } else {
-      promises.dequeue().setValue(msg)
+      promises.dequeue().success(msg)
     }
   }
 
@@ -34,11 +33,11 @@ class MsgQueue {
     */
   def pull(): Future[AnyRef] = {
     if (messages.isEmpty) {
-      val promise = new Promise[AnyRef]
+      val promise = Promise[AnyRef]
       promises += promise
-      promise
+      promise.future
     } else {
-      Future.value(messages.dequeue())
+      Future.successful(messages.dequeue())
     }
   }
 

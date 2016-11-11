@@ -6,6 +6,7 @@
         <ScalaCodeStyleSettings>
           <option name="alwaysUsedImports">
             <array>
+              <option value="me.tomaszwojcik.calcumau5.Implicits._" />
               <option value="scala.pickling.Defaults._" />
               <option value="scala.pickling.static._" />
             </array>
