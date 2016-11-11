@@ -5,28 +5,10 @@ import com.twitter.finagle.http.{Request => Req, Response => Res}
 import com.twitter.finagle.{Http, Service}
 import com.twitter.util.Future
 import me.tomaszwojcik.calcumau5.http.HealthServices
+import me.tomaszwojcik.calcumau5.util.Logging
 
-import scala.collection.mutable
-
-class Worker private(
-  val saved: Boolean,
-  val address: String,
-  val connected: Boolean) {
-
-  import Worker._
-
-  def save(): Unit = workersByAddr.synchronized {
-    workersByAddr.remove(address)
-    if (saved) {
-      workersByAddr.put(address, this)
-    } else {
-      workersByAddr.put(address, new Worker(saved = true, address, connected))
-    }
-  }
-
-  def delete(): Option[Worker] = workersByAddr.synchronized {
-    workersByAddr.remove(address)
-  }
+case class Worker(address: String, connected: Boolean)
+  extends StoreOperations with Logging {
 
   def createService(): Service[Req, Res] = Http.newService(address)
 
@@ -43,24 +25,12 @@ class Worker private(
       service.close()
     }
   }
-
-  def copy(
-    address: String = address,
-    connected: Boolean = connected): Worker = {
-
-    new Worker(saved = false, address, connected)
-  }
 }
 
-object Worker {
-  private lazy val workersByAddr = new mutable.HashMap[String, Worker]
+trait StoreOperations {
+  this: Worker =>
 
-  def apply(address: String, connected: Boolean): Worker = {
-    new Worker(saved = false, address, connected)
-  }
+  def save()(implicit store: WorkerStore): Worker = store.save(this)
 
-  def byAddress(addr: String): Option[Worker] = workersByAddr.synchronized {
-    workersByAddr.get(addr)
-  }
+  def remove()(implicit store: WorkerStore): Option[Worker] = store.remove(this)
 }
-

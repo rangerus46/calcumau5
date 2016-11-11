@@ -5,14 +5,15 @@ import com.twitter.finagle.http.Status._
 import com.twitter.finagle.http.{Request => Req, Response => Res}
 import com.twitter.util.Future
 import me.tomaszwojcik.calcumau5.util.Logging
-import me.tomaszwojcik.calcumau5.worker.Worker
+import me.tomaszwojcik.calcumau5.worker.{Worker, WorkerStore}
 
 import scala.io.Source
 import scala.pickling.Defaults._
 import scala.pickling.Unpickler
 import scala.pickling.json._
 
-class WorkerServices extends Logging {
+class WorkerServices(
+  implicit workerStore: WorkerStore) extends Logging {
 
   import WorkerServices._
 
@@ -51,7 +52,7 @@ object WorkerServices {
   implicit val workerJsonUnpickler: Unpickler[WorkerJson] = Unpickler.generate[WorkerJson]
 
   case class WorkerJson(address: String) {
-    def toWorker = Worker(address, isConnected = false)
+    def toWorker = Worker(address, connected = false)
   }
 
 }
