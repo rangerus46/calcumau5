@@ -19,14 +19,18 @@ class WorkerServices(
   import WorkerServices._
 
   def register(): Service[Req, Res] = new Service[Req, Res] {
-    override def apply(req: Req): Future[Res] = {
-      Future {
-        req.withInputStream(Source.fromInputStream)
-          .mkString
-          .unpickle[WorkerJson]
-      } flatMap {
-        _.toWorker.checkConnection()
-      } map { worker =>
+    override def apply(req: Req): Future[Res] = Future {
+      req // Write the request body to a string.
+        .withInputStream(Source.fromInputStream).mkString
+
+        // Create an instance of the worker from the string.
+        .unpickle[WorkerJson].toWorker
+    } flatMap {
+
+      // Test connection before adding to workers.
+      _.checkConnection() map { worker =>
+
+        // If connection was established, save the worker in the store.
         if (worker.isConnected) {
           log.info("Registering a new worker: {}", worker.toString)
           workerStore.save(worker)
@@ -35,14 +39,14 @@ class WorkerServices(
           log.error("Failed to connect to the worker at {}", worker.address)
           Res(BadRequest)
         }
-      } handle {
-        case e: Throwable =>
-          log.error("Failed to create a worker", e)
-          Res(BadRequest)
+
       }
+    } handle {
+      case e: Throwable =>
+        log.error("Failed to create a worker", e)
+        Res(BadRequest)
     }
   }
-
 }
 
 object WorkerServices {
