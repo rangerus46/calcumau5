@@ -17,8 +17,8 @@ class WorkerServices(
 
   import WorkerServices._
 
-  def register(): Service[Req, Res] = new Service[Req, Res] {
-    override def apply(req: Req): Future[Res] = Future {
+  def register(): Service[Req, Res] = Service.mk { req: Req =>
+    Future {
       req // Write the request body to a string.
         .withInputStream(Source.fromInputStream).mkString
 
