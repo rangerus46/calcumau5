@@ -8,4 +8,8 @@ object Config {
   object Http {
     val Port = config.getInt("http.port")
   }
+
+  object Health {
+    val PingPath = "/health/ping"
+  }
 }

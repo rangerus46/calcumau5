@@ -26,15 +26,21 @@ class WorkerServlet(implicit val workerStore: WorkerStore)
   }
 
   private def registerWorker(req: HttpServletRequest, resp: HttpServletResponse): Unit = {
+    val asyncCtx = {
+      req.startAsync()
+      req.getAsyncContext
+    }
+
     val json = parse(req.getInputStream)
     (json \ "address").extractOpt[String] match {
 
       case None =>
         resp.sendError(HttpStatus.BAD_REQUEST_400)
+        asyncCtx.complete()
 
       case Some(addr) =>
         val worker = Worker(addr)
-        worker.checkIfAlive() onComplete {
+        worker.checkIfAlive() andThen {
 
           // Instance at specified address is alive. Save the worker for later.
           case Success(true) =>
@@ -45,6 +51,8 @@ class WorkerServlet(implicit val workerStore: WorkerStore)
           case _ =>
             resp.sendError(HttpStatus.BAD_REQUEST_400, s"Failed to connect to the worker at $addr")
 
+        } onComplete { _ =>
+          asyncCtx.complete()
         }
 
     }
