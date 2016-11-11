@@ -5,16 +5,14 @@ import com.twitter.finagle.http.Status._
 import com.twitter.finagle.http.{Request => Req, Response => Res}
 import com.twitter.util.Future
 import me.tomaszwojcik.calcumau5.util.Logging
-import me.tomaszwojcik.calcumau5.worker.{Worker, WorkerStore}
+import me.tomaszwojcik.calcumau5.worker.Worker
 
 import scala.io.Source
-import scala.pickling.Unpickler
-import scala.pickling.static._
 import scala.pickling.Defaults._
+import scala.pickling.Unpickler
 import scala.pickling.json._
 
-class WorkerServices(
-  private val workerStore: WorkerStore) extends Logging {
+class WorkerServices extends Logging {
 
   import WorkerServices._
 
@@ -31,9 +29,9 @@ class WorkerServices(
       _.checkConnection() map { worker =>
 
         // If connection was established, save the worker in the store.
-        if (worker.isConnected) {
+        if (worker.connected) {
           log.info("Registering a new worker: {}", worker.toString)
-          workerStore.save(worker)
+          worker.save()
           Res(Created)
         } else {
           log.error("Failed to connect to the worker at {}", worker.address)
