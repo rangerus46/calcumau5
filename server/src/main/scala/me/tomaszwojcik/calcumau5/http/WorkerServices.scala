@@ -13,21 +13,17 @@ import scala.pickling.static._
 import scala.pickling.Defaults._
 import scala.pickling.json._
 
-case class WorkerDto(address: String) {
-  def toWorker = Worker(address, isConnected = false)
-}
-
 class WorkerServices(
   private val workerStore: WorkerStore) extends Logging {
 
-  implicit val workerDtoUnpickler: Unpickler[WorkerDto] = Unpickler.generate[WorkerDto]
+  import WorkerServices._
 
   def register(): Service[Req, Res] = new Service[Req, Res] {
     override def apply(req: Req): Future[Res] = {
       Future {
         req.withInputStream(Source.fromInputStream)
           .mkString
-          .unpickle[WorkerDto]
+          .unpickle[WorkerJson]
       } flatMap {
         _.toWorker.checkConnection()
       } map { worker =>
@@ -45,6 +41,15 @@ class WorkerServices(
           Res(BadRequest)
       }
     }
+  }
+
+}
+
+object WorkerServices {
+  implicit val workerJsonUnpickler: Unpickler[WorkerJson] = Unpickler.generate[WorkerJson]
+
+  case class WorkerJson(address: String) {
+    def toWorker = Worker(address, isConnected = false)
   }
 
 }
