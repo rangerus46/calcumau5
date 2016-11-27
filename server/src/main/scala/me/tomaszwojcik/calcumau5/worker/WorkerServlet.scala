@@ -9,7 +9,7 @@ import org.json4s.native.JsonMethods._
 
 import scala.util.Success
 
-class WorkerServlet(implicit val workerStore: WorkerStore)
+class WorkerServlet(val workerStore: WorkerStore)
   extends HttpServlet with Logging {
 
   import me.tomaszwojcik.calcumau5.Implicits._
@@ -44,7 +44,7 @@ class WorkerServlet(implicit val workerStore: WorkerStore)
 
           // Instance at specified address is alive. Save the worker for later.
           case Success(true) =>
-            worker.save()
+            workerStore.save(worker)
             resp.setStatus(HttpStatus.CREATED_201)
 
           // Instance at specified address failed to respond.

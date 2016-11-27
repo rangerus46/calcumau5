@@ -12,11 +12,11 @@ object Implicits {
   implicit lazy val formats = DefaultFormats
 
   // Concurrency
-  implicit lazy val scheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(4)
-  implicit lazy val executionContext = ExecutionContext.fromExecutor(scheduledThreadPoolExecutor)
+  implicit lazy val scheduledThreadPoolExecutor: ScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(4)
+  implicit lazy val executionContext: ExecutionContext = ExecutionContext.fromExecutor(scheduledThreadPoolExecutor)
 
   // HTTP Client
-  implicit lazy val httpClient = {
+  implicit lazy val httpClient: HttpClient = {
     val client = new HttpClient
     client.start()
     client

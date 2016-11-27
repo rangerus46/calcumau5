@@ -9,8 +9,7 @@ import org.eclipse.jetty.http.{HttpMethod, HttpStatus}
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
-case class Worker(address: String)
-  extends StoreOperations with Logging {
+case class Worker(address: String) extends Logging {
 
   def request(path: String)(implicit hc: HttpClient, ec: ExecutionContext): Future[Response] = {
     val promise = Promise[Response]
@@ -34,12 +33,4 @@ case class Worker(address: String)
       HttpStatus.isSuccess(res.getStatus)
     }
   }
-}
-
-trait StoreOperations {
-  this: Worker =>
-
-  def save()(implicit store: WorkerStore): Worker = store.save(this)
-
-  def remove()(implicit store: WorkerStore): Option[Worker] = store.remove(this)
 }

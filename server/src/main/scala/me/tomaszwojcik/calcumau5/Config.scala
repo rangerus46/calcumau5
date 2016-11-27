@@ -3,13 +3,13 @@ package me.tomaszwojcik.calcumau5
 import com.typesafe.config.ConfigFactory
 
 object Config {
-  val config = ConfigFactory.defaultApplication()
+  private val config = ConfigFactory.defaultApplication()
 
   object Http {
-    val Port = config.getInt("http.port")
+    val Port: Int = config.getInt("http.port")
   }
 
   object Health {
-    val PingPath = "/health/ping"
+    val PingPath: String = "/health/ping"
   }
 }
