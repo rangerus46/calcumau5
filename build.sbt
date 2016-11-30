@@ -1,8 +1,7 @@
 import Dependencies._
-import xerial.sbt.Pack._
 
 lazy val commonSettings = Seq(
-  organization := "me.tomaszwojcik.calcumau5",
+  organization := "me.tomaszwojcik",
   scalaVersion := "2.11.8"
 )
 
@@ -12,8 +11,7 @@ lazy val server = (project in file("server")).
     name := "calcumau5-server",
     version := "0.1.0",
     libraryDependencies ++= serverDeps
-  ).
-  settings(packAutoSettings: _*)
+  )
 
 lazy val job = (project in file("job")).
   settings(commonSettings: _*).
@@ -22,4 +20,3 @@ lazy val job = (project in file("job")).
     version := "0.1.0",
     libraryDependencies ++= jobDeps
   )
-

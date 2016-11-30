@@ -9,27 +9,28 @@ object Dependencies {
   val slf4jApiVersion = "1.7.21"
   val logbackVersion = "1.1.7"
 
-  val jettyVersion = "9.3.14.v20161028"
+  val nettyVersion = "4.1.6.Final"
+  val nettyRouterVersion = "2.0.0"
 
   val json4sNativeVersion = "3.4.2"
 
   // Libraries
-  val macwire = "com.softwaremill.macwire" %% "macros" % macwireVersion
+  val macwire: ModuleID = "com.softwaremill.macwire" %% "macros" % macwireVersion
 
-  val config = "com.typesafe" % "config" % configVersion
+  val config: ModuleID = "com.typesafe" % "config" % configVersion
 
-  val slf4jApi = "org.slf4j" % "slf4j-api" % slf4jApiVersion
-  val logback = "ch.qos.logback" % "logback-classic" % logbackVersion % "optional"
-  val loggingDeps = Seq(slf4jApi, logback)
+  val slf4jApi: ModuleID = "org.slf4j" % "slf4j-api" % slf4jApiVersion
+  val logback: ModuleID = "ch.qos.logback" % "logback-classic" % logbackVersion % "optional"
+  val loggingModules = Seq(slf4jApi, logback)
 
-  val jettyServer = "org.eclipse.jetty" % "jetty-server" % jettyVersion
-  val jettyServlet = "org.eclipse.jetty" % "jetty-servlet" % jettyVersion
-  val jettyClient = "org.eclipse.jetty" % "jetty-client" % jettyVersion
-  val jettyDeps = Seq(jettyServer, jettyServlet, jettyClient)
+  val nettyModules: Seq[ModuleID] = Seq(
+    "io.netty" % "netty-all" % nettyVersion,
+    "tv.cntt" % "netty-router" % nettyRouterVersion
+  )
 
-  val json4sNative = "org.json4s" %% "json4s-native" % json4sNativeVersion
+  val json4sNative: ModuleID = "org.json4s" %% "json4s-native" % json4sNativeVersion
 
   // Projects
-  val jobDeps = loggingDeps
-  val serverDeps = Seq(macwire, config, json4sNative) ++ loggingDeps ++ jettyDeps
+  val jobDeps: Seq[ModuleID] = loggingModules
+  val serverDeps: Seq[ModuleID] = Seq(macwire, config, json4sNative) ++ loggingModules ++ nettyModules
 }

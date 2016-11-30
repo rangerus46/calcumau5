@@ -1,10 +1,11 @@
 package me.tomaszwojcik.calcumau5
 
-import me.tomaszwojcik.calcumau5.worker.{WorkerServlet, WorkerStore}
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.servlet.{ServletContextHandler, ServletHolder}
 import com.softwaremill.macwire.wire
 import me.tomaszwojcik.calcumau5.health.HealthServlet
+import me.tomaszwojcik.calcumau5.job.JobServlet
+import me.tomaszwojcik.calcumau5.worker.{WorkerServlet, WorkerStore}
+import org.eclipse.jetty.server.Server
+import org.eclipse.jetty.servlet.{ServletContextHandler, ServletHandler, ServletHolder}
 
 object JettyRunner {
 
@@ -12,16 +13,15 @@ object JettyRunner {
 
   lazy val workerServlet: WorkerServlet = wire[WorkerServlet]
   lazy val healthServlet: HealthServlet = wire[HealthServlet]
+  lazy val jobServlet: JobServlet = wire[JobServlet]
 
   def main(args: Array[String]): Unit = {
     val server = new Server(Config.Http.Port)
     try {
-      server.setHandler {
-        val handler = new ServletContextHandler()
-        handler.addServlet(new ServletHolder(workerServlet), "/workers/*")
-        handler.addServlet(new ServletHolder(healthServlet), "/health/*")
-        handler
-      }
+//      val handler = new ServletContextHandler
+//      handler.addServlet(new ServletHolder(new DispatcherServlet), "/*")
+//      server.setHandler(handler)
+      server.setHandler(new MainHandler)
       server.start()
       server.join()
     } finally {
