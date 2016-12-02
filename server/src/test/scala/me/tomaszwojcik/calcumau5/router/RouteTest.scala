@@ -65,4 +65,17 @@ class RouteTest extends FlatSpec with Matchers with TableDrivenPropertyChecks {
     route.matches(path) shouldEqual res
   }
 
+  "A Route with one variable" should "extract variable from path" in {
+    val vars = Route("/items/:id").extractVars("/items/1")
+    assertResult(1)(vars.size)
+    assertResult(Some("1"))(vars get "id")
+  }
+
+  "A Route with two variables" should "extract variables from path" in {
+    val vars = Route("/items/:id/sub-items/:sub-id").extractVars("/items/1/sub-items/2")
+    assertResult(2)(vars.size)
+    assertResult(Some("1"))(vars get "id")
+    assertResult(Some("2"))(vars get "sub-id")
+  }
+
 }

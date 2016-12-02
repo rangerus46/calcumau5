@@ -10,8 +10,16 @@ class Route(path: String) {
     val matchedTokens = splitPathIntoTokens(path)
 
     matchedTokens.length == tokens.length && (matchedTokens zip tokens).forall { case (matchedToken, token) =>
-      isTokenVariable(token) || matchedToken.equals(token)
+      isPlaceholder(token) || matchedToken.equals(token)
     }
+  }
+
+  def extractVars(path: String): Map[String, String] = {
+    splitPathIntoTokens(path).zip(tokens).filter { case (_, token) =>
+      isPlaceholder(token)
+    }.map { case (matchedToken, token) =>
+      (token.stripPrefix(":"), matchedToken)
+    }.toMap
   }
 
   def canEqual(other: Any): Boolean = other.isInstanceOf[Route]
@@ -42,5 +50,5 @@ object Route {
     }
   }
 
-  private def isTokenVariable(s: String): Boolean = s.startsWith(":")
+  private def isPlaceholder(token: String): Boolean = token.startsWith(":")
 }
