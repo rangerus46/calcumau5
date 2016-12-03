@@ -11,11 +11,13 @@ object App extends Logging {
   def main(args: Array[String]): Unit = {
     val parentGroup = new NioEventLoopGroup
     val childGroup = new NioEventLoopGroup
+    val serverChannelInitializer = new ServerChannelInitializer
+
     try {
       val bootstrap = new ServerBootstrap()
         .group(parentGroup, childGroup)
         .channel(classOf[NioServerSocketChannel])
-        .childHandler(new HttpChannelInitializer)
+        .childHandler(serverChannelInitializer)
 
       val f = bootstrap.bind(Conf.Http.Port)
 
