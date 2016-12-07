@@ -6,7 +6,7 @@ import io.netty.handler.codec.http._
 import me.tomaszwojcik.calcumau5.router.Router
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class ServerChannelInitializer extends ChannelInitializer[SocketChannel] with Logging {
+class ServerChannelInitializer(router: Router) extends ChannelInitializer[SocketChannel] with Logging {
 
   override def initChannel(ch: SocketChannel): Unit = {
     ch.pipeline
@@ -15,23 +15,4 @@ class ServerChannelInitializer extends ChannelInitializer[SocketChannel] with Lo
       .addLast(router)
   }
 
-  private val router = new Router
-
-  router.get("/items/:id") { (ctx, msg, vars) =>
-    log.info("GET item with id: {}", vars("id").toInt)
-    val res = new DefaultHttpResponse(msg.protocolVersion, HttpResponseStatus.OK)
-    ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE)
-  }
-
-  router.get("/items") { (ctx, msg, _) =>
-    log.info("GET all items")
-    val res = new DefaultHttpResponse(msg.protocolVersion, HttpResponseStatus.OK)
-    ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE)
-  }
-
-  router.post("/items") { (ctx, msg, _) =>
-    log.info("POST an item")
-    val res = new DefaultHttpResponse(msg.protocolVersion, HttpResponseStatus.OK)
-    ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE)
-  }
 }
