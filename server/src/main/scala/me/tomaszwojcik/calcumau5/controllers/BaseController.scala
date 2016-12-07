@@ -42,4 +42,9 @@ trait BaseController {
     res
   }
 
+  def fromJson[A <: AnyRef](buf: ByteBuf)(implicit mf: Manifest[A]): A = {
+    val json = buf.toString(StandardCharsets.UTF_8)
+    Serialization.read[A](json)
+  }
+
 }

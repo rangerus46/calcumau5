@@ -1,4 +1,4 @@
-package me.tomaszwojcik.calcumau5.worker
+package me.tomaszwojcik.calcumau5.domain
 
 class Worker(val host: String, val port: Int) {
 

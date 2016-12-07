@@ -8,8 +8,8 @@ import me.tomaszwojcik.calcumau5.controllers.WorkerController
 import me.tomaszwojcik.calcumau5.router.Router
 import me.tomaszwojcik.calcumau5.util.Logging
 import me.tomaszwojcik.calcumau5.util.NettyConversions._
-import me.tomaszwojcik.calcumau5.worker.WorkerStore
 import com.softwaremill.macwire.wire
+import me.tomaszwojcik.calcumau5.store.{SimpleWorkerStore, WorkerStore}
 
 object App extends Logging {
 
@@ -40,6 +40,6 @@ object App extends Logging {
   lazy val router: Router = wire[Router]
 
   val workerController: WorkerController = wire[WorkerController]
-  lazy val workerStore: WorkerStore = wire[WorkerStore]
+  lazy val workerStore: WorkerStore = wire[SimpleWorkerStore]
 
 }
