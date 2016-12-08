@@ -7,5 +7,6 @@ object Conf {
 
   object Http {
     val Port: Int = config.getInt("http.port")
+    val MaxContentLength: Int = config.getMemorySize("http.max-content-length").toBytes.toInt
   }
 }
