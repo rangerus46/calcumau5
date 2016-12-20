@@ -12,10 +12,18 @@ import me.tomaszwojcik.calcumau5.store.{SimpleWorkerStore, WorkerStore}
 import me.tomaszwojcik.calcumau5.util.Logging
 import me.tomaszwojcik.calcumau5.util.NettyConversions._
 
+import scala.io.Source
+import scala.util.Try
+
 object App extends Logging {
 
   def main(args: Array[String]): Unit = {
     val serverChannelInitializer = new ServerChannelInitializer(router)
+
+    // Optionally print out an ascii art.
+    for (s <- asciiArt) {
+      log.info(s)
+    }
 
     try {
       val bootstrap = new ServerBootstrap()
@@ -34,6 +42,12 @@ object App extends Logging {
       parentGroup.shutdownGracefully()
       childGroup.shutdownGracefully()
     }
+  }
+
+  lazy val asciiArt: Try[String] = Try {
+    val is = getClass.getResourceAsStream("/ascii-art.txt")
+    val source = Source.fromInputStream(is, "UTF-8")
+    source.mkString
   }
 
   val parentGroup = new NioEventLoopGroup
