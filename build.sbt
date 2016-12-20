@@ -11,7 +11,8 @@ lazy val server = (project in file("server")).
     name := "calcumau5-server",
     version := "0.1.0",
     libraryDependencies ++= serverDeps
-  )
+  ).
+  dependsOn(job)
 
 lazy val job = (project in file("job")).
   settings(commonSettings: _*).

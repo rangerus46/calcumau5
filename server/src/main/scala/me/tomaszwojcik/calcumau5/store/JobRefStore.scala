@@ -10,6 +10,10 @@ class SimpleJobRefStore
     with SimpleBaseStore[JobRef, Long]
     with LongIdGenerator {
 
-  add(JobRef(1L, "me.tomaszwojcik.TestJob", "/home/Desktop/TestJob.jar"))
+  // FIXME: only there for test purposes
+  add(JobRef(
+    "me.tomaszwojcik.TestJob",
+    "job-0.jar"
+  ))
 
 }

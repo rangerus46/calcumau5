@@ -2,7 +2,7 @@ package me.tomaszwojcik.calcumau5.job
 
 trait Job {
 
-  val sender: WorkerRef
+  val sender: WorkerRef = null
 
   def init(): Unit
 

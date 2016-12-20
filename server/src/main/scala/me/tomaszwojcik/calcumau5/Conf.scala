@@ -1,5 +1,7 @@
 package me.tomaszwojcik.calcumau5
 
+import java.io.File
+
 import com.typesafe.config.ConfigFactory
 
 object Conf {
@@ -12,5 +14,9 @@ object Conf {
 
   object Env {
     val Calcumau5HomePath: String = System.getenv("CALCUMAU5_HOME")
+  }
+
+  object FS {
+    val WorkerJarsDir: File = new File(Env.Calcumau5HomePath, "workers")
   }
 }
