@@ -9,4 +9,8 @@ object Conf {
     val Port: Int = config.getInt("http.port")
     val MaxContentLength: Int = config.getMemorySize("http.max-content-length").toBytes.toInt
   }
+
+  object Env {
+    val Calcumau5HomePath: String = System.getenv("CALCUMAU5_HOME")
+  }
 }
