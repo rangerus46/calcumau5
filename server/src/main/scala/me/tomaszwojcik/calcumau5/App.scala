@@ -6,7 +6,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioServerSocketChannel
 import io.netty.util.concurrent.Future
 import me.tomaszwojcik.calcumau5.client.HttpClient
-import me.tomaszwojcik.calcumau5.controllers.WorkerController
+import me.tomaszwojcik.calcumau5.controllers.{HealthController, WorkerController}
 import me.tomaszwojcik.calcumau5.router.Router
 import me.tomaszwojcik.calcumau5.store.{SimpleWorkerStore, WorkerStore}
 import me.tomaszwojcik.calcumau5.util.Logging
@@ -58,6 +58,8 @@ object App extends Logging {
   lazy val router: Router = wire[Router]
 
   val workerController: WorkerController = wire[WorkerController]
+  val healthController: HealthController = wire[HealthController]
+
   lazy val workerStore: WorkerStore = wire[SimpleWorkerStore]
 
 }
