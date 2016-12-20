@@ -14,7 +14,12 @@ class Router extends SimpleChannelInboundHandler[FullHttpRequest] with Logging {
   private val routes = new mutable.Queue[Route]
 
   private def register(m: HttpMethod, s: String)(fn: (CHCtx, FullHttpRequest, Map[String, String]) => Unit) = {
-    routes += Route(m, s, fn)
+    val route = Route(m, s, fn)
+    if (routes.contains(route)) {
+      throw new IllegalArgumentException(s"$route already exists")
+    } else {
+      routes += Route(m, s, fn)
+    }
     this
   }
 

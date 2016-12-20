@@ -30,17 +30,6 @@ class WorkerController(
     ctx.write(res).addListener(CLOSE)
   }
 
-  // TODO: Remove when no longer needed. Only there for testing purposes.
-  router.get("/ping") { (ctx, _, _) =>
-    val req = HttpReq("localhost", 5555, "/workers", HttpMethod.GET)
-    for (res <- client.send(req)) {
-      log.info("Received response: {}", res)
-    }
-
-    val res = httpRes()
-    ctx.writeAndFlush(res).addListener(CLOSE)
-  }
-
 }
 
 case class WorkerForm(host: String, port: Int) {
