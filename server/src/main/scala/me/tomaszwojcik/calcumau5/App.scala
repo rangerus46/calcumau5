@@ -10,6 +10,7 @@ import io.netty.util.concurrent.Future
 import me.tomaszwojcik.calcumau5.client.HttpClient
 import me.tomaszwojcik.calcumau5.controllers.{HealthController, JobController, WorkerController}
 import me.tomaszwojcik.calcumau5.router.Router
+import me.tomaszwojcik.calcumau5.service.JobExecutorService
 import me.tomaszwojcik.calcumau5.store._
 import me.tomaszwojcik.calcumau5.util.Logging
 import me.tomaszwojcik.calcumau5.util.NettyConversions._
@@ -85,6 +86,8 @@ object App extends Logging {
   val workerController: WorkerController = wire[WorkerController]
   val healthController: HealthController = wire[HealthController]
   val jobController: JobController = wire[JobController]
+
+  lazy val jobExecutorService: JobExecutorService = wire[JobExecutorService]
 
   lazy val workerStore: WorkerStore = wire[SimpleWorkerStore]
   lazy val jobRefStore: JobRefStore = wire[SimpleJobRefStore]
