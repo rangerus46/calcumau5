@@ -45,8 +45,6 @@ class JobController(
     ctx.write(res).addListener(ChannelFutureListener.CLOSE)
   }
 
-  case class TestMsg()
-
   private def startJob(jobRef: JobRef): Unit = {
     log.info("Starting job {}", jobRef)
 
@@ -57,9 +55,7 @@ class JobController(
 
     val clazz = loader.loadClass(jobRef.className)
     val job = clazz.newInstance().asInstanceOf[Job]
-
-    job.init()
-    job.process(TestMsg())
+    job.receive("PING")
   }
 
 }

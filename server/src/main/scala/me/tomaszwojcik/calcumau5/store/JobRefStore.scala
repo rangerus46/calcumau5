@@ -12,7 +12,7 @@ class SimpleJobRefStore
 
   // FIXME: only there for test purposes
   add(JobRef(
-    "me.tomaszwojcik.TestJob",
+    "me.tomaszwojcik.calcumau5.job.PingPongJob",
     "job-0.jar"
   ))
 
