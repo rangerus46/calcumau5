@@ -17,6 +17,6 @@ object Conf {
   }
 
   object FS {
-    val WorkerJarsDir: File = new File(Env.Calcumau5HomePath, "workers")
+    val WorkerJarsDir: File = new File(Env.Calcumau5HomePath, "jobs")
   }
 }

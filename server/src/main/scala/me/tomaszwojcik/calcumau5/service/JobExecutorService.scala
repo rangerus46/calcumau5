@@ -1,28 +1,57 @@
 package me.tomaszwojcik.calcumau5.service
 
-import me.tomaszwojcik.calcumau5.domain.JobRef
-import me.tomaszwojcik.calcumau5.store.JobRefStore
+import me.tomaszwojcik.calcumau5.Job.Args
+import me.tomaszwojcik.calcumau5._
+import me.tomaszwojcik.calcumau5.domain.{JobExec, JobRef}
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class JobExecutorService(jobRefStore: JobRefStore) extends Logging {
+import scala.util.Try
 
-  //  private var awaitingJobRefs = new mutable.Queue[JobRef]
-  //  private val jobExecutions = new mutable.Queue[JobExecution]
+class JobExecutorService extends Logging {
 
-  def executeJob(ref: JobRef): Unit = synchronized {
-    //    val instance = new WordCounterDef
-    //    val path = getClass.getResource("/test-file.txt").getFile
-    //    instance.map("test-file.txt", new File(path))
-    //    instance.results.groupBy(_.word).foreach { pair =>
-    //      instance.reduce(pair._1, pair._2.map(_.count))
-    //    }
+  type AnyContext = Context[Any, Any]
+  type AnyReader = Reader[Any, Any]
+  type AnyMapper = Mapper[Any, Any, Any, Any]
+  type AnyReducer = Reducer[Any, Any, Any, Any]
+  type AnyWriter = Writer[Any, Any]
+
+  def startJob(ref: JobRef, args: Args): Unit = synchronized {
+    val job = createWithArgs(ref.getClazz, args)
+    val exec = JobExec(job, args)
+
+    val reader = createWithArgs(exec.job.reader, exec.args).asInstanceOf[AnyReader]
+    val mapper = createWithArgs(exec.job.mapper, exec.args).asInstanceOf[AnyMapper]
+    val reducer = createWithArgs(exec.job.reducer, exec.args).asInstanceOf[AnyReducer]
+    val writer = createWithArgs(exec.job.writer, exec.args).asInstanceOf[AnyWriter]
+
+    reader.readAll(readerCtx)
+    reader.close()
+    writer.close()
+
+    lazy val readerCtx = new AnyContext {
+      override def emit(key: Any, value: Any): Unit = mapper.map(key, value, mapperCtx)
+    }
+
+    lazy val mapperCtx = new AnyContext {
+      override def emit(key: Any, value: Any): Unit = reducer.reduce(key, Seq(value), reducerCtx)
+    }
+
+    lazy val reducerCtx = new AnyContext {
+      override def emit(key: Any, value: Any): Unit = writer.write(key, value)
+    }
   }
 
-  //  private def createJobInstance(jobRef: JobRef): Job = {
-  //    val file = new File(Conf.FS.WorkerJarsDir, jobRef.jarName)
-  //    val loader = URLClassLoader.newInstance(Array(file.toURI.toURL), getClass.getClassLoader)
-  //    val clazz = loader.loadClass(jobRef.className)
-  //    clazz.newInstance().asInstanceOf[Job]
-  //  }
+  private def createWithArgs[A](
+    cls: Class[A],
+    args: Args
+  ): A = {
+    Try {
+      val c = cls.getConstructor(classOf[Args])
+      c.newInstance(args)
+    } getOrElse {
+      val c = cls.getConstructor()
+      c.newInstance()
+    }
+  }
 
 }

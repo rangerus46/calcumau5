@@ -24,15 +24,14 @@ object WordCountingJob {
     private val lines = Source.fromFile(file).getLines()
     private var lineNo: Long = -1
 
-    override def read(): Option[(Long, String)] = {
-      if (lines.hasNext) {
+    override def readAll(ctx: Context[Long, String]): Unit = {
+      while (lines.hasNext) {
         lineNo += 1
-        val res = (lineNo, lines.next())
-        Some(res)
-      } else {
-        None
+        ctx.emit(lineNo, lines.next())
       }
     }
+
+    override def close(): Unit = {}
   }
 
   private class MapperImpl extends Mapper[Long, String, String, Long] {
@@ -53,6 +52,8 @@ object WordCountingJob {
     private val log = LoggerFactory.getLogger(getClass)
 
     override def write(key: Any, value: Any): Unit = log.info("Writing: ({} <- {})", key, value)
+
+    override def close(): Unit = {}
   }
 
 }

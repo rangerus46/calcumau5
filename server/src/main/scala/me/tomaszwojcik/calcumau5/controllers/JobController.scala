@@ -13,6 +13,8 @@ class JobController(
   jobExecutorService: JobExecutorService
 ) extends BaseController with Logging {
 
+  import JobController._
+
   /**
     * GET /jobs
     *
@@ -25,20 +27,28 @@ class JobController(
   }
 
   /**
-    * POST /jobs/:id/start
+    * POST /jobs/start
     *
-    * Starts job with a given id.
+    * Finds a job with a given name and starts it with a given args.
     */
-  router.post("/jobs/:id/start") { (ctx, _, vars) =>
-    val id = vars.get("id").map(_.toLong).get
-    val res = jobRefStore.findById(id) match {
-      case Some(jobRef) =>
-        jobExecutorService.executeJob(jobRef)
+  router.post("/jobs/start") { (ctx, req, _) =>
+    val msg = fromJson[StartJobMsg](req.content)
+    val res = jobRefStore.findByName(msg.name) match {
+      case Some(ref) =>
+        jobExecutorService.startJob(ref, Map.empty)
         httpRes(status = HttpResponseStatus.OK)
       case None =>
         httpRes(status = HttpResponseStatus.NOT_FOUND)
     }
     ctx.write(res).addListener(ChannelFutureListener.CLOSE)
   }
+
+}
+
+object JobController {
+
+  case class StartJobMsg(
+    name: String
+  )
 
 }
