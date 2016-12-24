@@ -16,6 +16,9 @@ object Dependencies {
 
   val json4sNativeVersion = "3.4.2"
 
+  val slickVersion = "3.1.1"
+  val hsqldbVersion = "2.3.4"
+
   // Libraries
   val scalaTest: ModuleID = "org.scalatest" %% "scalatest" % scalaTestVersion % "test"
 
@@ -34,7 +37,15 @@ object Dependencies {
 
   val json4sNative: ModuleID = "org.json4s" %% "json4s-native" % json4sNativeVersion
 
+  val persistenceModules: Seq[ModuleID] = Seq(
+    "com.typesafe.slick" %% "slick" % slickVersion,
+    "org.hsqldb" % "hsqldb" % hsqldbVersion
+  )
+
   // Projects
   val jobDeps: Seq[ModuleID] = Seq(scalaTest) ++ loggingModules
-  val serverDeps: Seq[ModuleID] = Seq(scalaTest, macwire, config, json4sNative) ++ loggingModules ++ nettyModules
+
+  val serverDeps: Seq[ModuleID] = Seq(
+    scalaTest, macwire, config, json4sNative
+  ) ++ loggingModules ++ nettyModules ++ persistenceModules
 }

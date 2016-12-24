@@ -1,8 +1,12 @@
 package me.tomaszwojcik.calcumau5.service
 
+import java.io.File
+import java.net.URLClassLoader
+
+import me.tomaszwojcik.calcumau5.Entities.JobRef
 import me.tomaszwojcik.calcumau5.Job.Args
 import me.tomaszwojcik.calcumau5._
-import me.tomaszwojcik.calcumau5.domain.{JobExec, JobRef}
+import me.tomaszwojcik.calcumau5.domain.JobExec
 import me.tomaszwojcik.calcumau5.util.Logging
 
 import scala.util.Try
@@ -16,7 +20,12 @@ class JobExecutorService extends Logging {
   type AnyWriter = Writer[Any, Any]
 
   def startJob(ref: JobRef, args: Args): Unit = synchronized {
-    val job = createWithArgs(ref.getClazz, args)
+    val jar = new File(Conf.FS.WorkerJarsDir, ref.jarName)
+    val url = jar.toURI.toURL
+    val loader = new URLClassLoader(Array(url), getClass.getClassLoader)
+    val clazz = loader.loadClass(ref.className).asSubclass(classOf[Job])
+
+    val job = createWithArgs(clazz, args)
     val exec = JobExec(job, args)
 
     val reader = createWithArgs(exec.job.reader, exec.args).asInstanceOf[AnyReader]

@@ -11,9 +11,9 @@ import me.tomaszwojcik.calcumau5.client.HttpClient
 import me.tomaszwojcik.calcumau5.controllers.{HealthController, JobController, WorkerController}
 import me.tomaszwojcik.calcumau5.router.Router
 import me.tomaszwojcik.calcumau5.service.JobExecutorService
-import me.tomaszwojcik.calcumau5.store._
 import me.tomaszwojcik.calcumau5.util.Logging
 import me.tomaszwojcik.calcumau5.util.NettyConversions._
+import slick.driver.HsqldbDriver.api._
 
 import scala.io.Source
 import scala.util.Try
@@ -76,6 +76,8 @@ object App extends Logging {
     source.mkString
   }
 
+  implicit val db = Database.forConfig("db")
+
   val parentGroup = new NioEventLoopGroup
   val childGroup = new NioEventLoopGroup
 
@@ -89,7 +91,6 @@ object App extends Logging {
 
   lazy val jobExecutorService: JobExecutorService = wire[JobExecutorService]
 
-  lazy val workerStore: WorkerStore = wire[SimpleWorkerStore]
-  lazy val jobRefStore: JobRefStore = wire[SimpleJobRefStore]
+  Entities.init()
 
 }

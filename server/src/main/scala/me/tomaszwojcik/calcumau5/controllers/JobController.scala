@@ -1,15 +1,18 @@
 package me.tomaszwojcik.calcumau5.controllers
 
 import io.netty.channel.ChannelFutureListener
-import io.netty.handler.codec.http.HttpResponseStatus
+import io.netty.handler.codec.http.HttpResponseStatus._
+import me.tomaszwojcik.calcumau5.Entities.jobRefs
 import me.tomaszwojcik.calcumau5.router.Router
 import me.tomaszwojcik.calcumau5.service.JobExecutorService
-import me.tomaszwojcik.calcumau5.store.JobRefStore
 import me.tomaszwojcik.calcumau5.util.Logging
+import slick.driver.HsqldbDriver.api._
+
+import scala.concurrent.ExecutionContext.Implicits.global
 
 class JobController(
+  db: Database,
   router: Router,
-  jobRefStore: JobRefStore,
   jobExecutorService: JobExecutorService
 ) extends BaseController with Logging {
 
@@ -21,9 +24,14 @@ class JobController(
     * Retrieves all jobs present in the store.
     */
   router.get("/jobs") { (ctx, _, _) =>
-    val jobs = jobRefStore.retrieveAll()
-    val res = jsonHttpRes(content = jobs)
-    ctx.write(res).addListener(ChannelFutureListener.CLOSE)
+    val query = jobRefs.result
+    val f = db.run(query)
+
+    f.onSuccess {
+      case jobs =>
+        val res = jsonHttpRes(content = jobs)
+        ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE)
+    }
   }
 
   /**
@@ -33,14 +41,20 @@ class JobController(
     */
   router.post("/jobs/start") { (ctx, req, _) =>
     val msg = fromJson[StartJobMsg](req.content)
-    val res = jobRefStore.findByName(msg.name) match {
-      case Some(ref) =>
-        jobExecutorService.startJob(ref, Map.empty)
-        httpRes(status = HttpResponseStatus.OK)
+
+    val query = jobRefs.filter(_.name === msg.name).result.headOption
+    val f = db.run(query)
+
+    f.onSuccess {
+      case Some(job) =>
+        jobExecutorService.startJob(job, Map.empty)
+        val res = httpRes(status = OK)
+        ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE)
+
       case None =>
-        httpRes(status = HttpResponseStatus.NOT_FOUND)
+        val res = httpRes(status = NOT_FOUND)
+        ctx.writeAndFlush(res).addListener(ChannelFutureListener.CLOSE)
     }
-    ctx.write(res).addListener(ChannelFutureListener.CLOSE)
   }
 
 }
