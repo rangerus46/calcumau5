@@ -1,24 +1,30 @@
 package me.tomaszwojcik.calcumau5
 
-import java.net.InetSocketAddress
-
-import io.netty.channel.{ChannelHandlerContext, ChannelInboundHandler, SimpleChannelInboundHandler}
+import io.netty.channel.ChannelInitializer
+import io.netty.channel.socket.SocketChannel
+import io.netty.handler.codec.string.{StringDecoder, StringEncoder}
+import io.netty.handler.codec.{LengthFieldBasedFrameDecoder, LengthFieldPrepender}
+import io.netty.handler.logging.LoggingHandler
+import me.tomaszwojcik.calcumau5.Constants.Network.{LengthFieldLength, MaxFrameLength}
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class ClientChannelInitializer extends ChannelInitializerBase with Logging {
-  override def inboundHandler: ChannelInboundHandler = new SimpleChannelInboundHandler[String]() {
-    override def channelRead0(ctx: ChannelHandlerContext, msg: String): Unit = {
-      log.info("Received message: {}", msg)
-    }
+class ClientChannelInitializer extends ChannelInitializer[SocketChannel] with Logging {
 
-    override def channelActive(ctx: ChannelHandlerContext): Unit = {
-      val address = ctx.channel().remoteAddress().asInstanceOf[InetSocketAddress]
-      log.info(s"Connected to ${address.getHostString}:${address.getPort}")
+  private val loggingHandler = new LoggingHandler
+  private val lengthFieldPrepender = new LengthFieldPrepender(4)
+  private val stringDecoder = new StringDecoder(Constants.DefaultCharset)
+  private val stringEncoder = new StringEncoder(Constants.DefaultCharset)
+  private val clientHandler = new ClientHandler
 
-      val msg = "PING"
-      log.info("Sending message: {}", msg)
-      ctx.writeAndFlush(msg)
-    }
+  override def initChannel(ch: SocketChannel): Unit = {
+    ch.pipeline()
+      .addLast(loggingHandler)
+      .addLast(new LengthFieldBasedFrameDecoder(MaxFrameLength, 0, LengthFieldLength, 0, LengthFieldLength))
+      .addLast(lengthFieldPrepender)
+      .addLast(stringDecoder)
+      .addLast(stringEncoder)
+      .addLast(clientHandler)
   }
+
 }
 
