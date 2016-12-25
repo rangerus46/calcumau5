@@ -1,4 +1,4 @@
-package me.tomaszwojcik.calcumau5.domain
+package me.tomaszwojcik.calcumau5
 
 sealed abstract class JobStatus
 

@@ -5,7 +5,7 @@ import io.netty.channel.socket.SocketChannel
 import io.netty.handler.codec.string.{StringDecoder, StringEncoder}
 import io.netty.handler.codec.{LengthFieldBasedFrameDecoder, LengthFieldPrepender}
 import io.netty.handler.logging.LoggingHandler
-import me.tomaszwojcik.calcumau5.Constants.Network.{LengthFieldLength, MaxFrameLength}
+import me.tomaszwojcik.calcumau5.Constants.Frame
 import me.tomaszwojcik.calcumau5.util.Logging
 
 class ClientChannelInitializer extends ChannelInitializer[SocketChannel] with Logging {
@@ -19,7 +19,7 @@ class ClientChannelInitializer extends ChannelInitializer[SocketChannel] with Lo
   override def initChannel(ch: SocketChannel): Unit = {
     ch.pipeline()
       .addLast(loggingHandler)
-      .addLast(new LengthFieldBasedFrameDecoder(MaxFrameLength, 0, LengthFieldLength, 0, LengthFieldLength))
+      .addLast(new LengthFieldBasedFrameDecoder(Frame.MaxLength, 0, Frame.LengthFieldLength, 0, Frame.LengthFieldLength))
       .addLast(lengthFieldPrepender)
       .addLast(stringDecoder)
       .addLast(stringEncoder)
