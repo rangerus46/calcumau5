@@ -28,7 +28,7 @@ lazy val server = (project in file("server")).
     ),
     libraryDependencies ++= nettyModules
   ).
-  dependsOn(commons, job)
+  dependsOn(commons, node)
 
 lazy val client = (project in file("client")).
   settings(commonSettings: _*).
@@ -44,12 +44,12 @@ lazy val client = (project in file("client")).
     ),
     libraryDependencies ++= nettyModules
   ).
-  dependsOn(commons, job)
+  dependsOn(commons, node)
 
-lazy val job = (project in file("job")).
+lazy val node = (project in file("node")).
   settings(commonSettings: _*).
   settings(
-    name := "calcumau5-job",
+    name := "calcumau5-node",
     version := "0.1.0",
     libraryDependencies ++= Seq(
       scalaTest,

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="SBT 1" modules="calcumau5,client,commons,job,server" />
+    <profile name="SBT 1" modules="job,calcumau5,client,commons,node,server" />
   </component>
 </project>
