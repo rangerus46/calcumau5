@@ -5,7 +5,7 @@ import scala.concurrent.Future
 object api {
 
   trait Node {
-    var ctx: NodeCtx = _
+    var ctx: NodeContext = new NodeContextImpl
     var sender: NodeRef = _
 
     def receive: PartialFunction[AnyRef, Unit]
@@ -17,10 +17,10 @@ object api {
     def afterStop(): Unit = {}
   }
 
-  trait NodeCtx {
-    def newNode[A <: Node](implicit mf: Manifest[A]): NodeRef
+  trait NodeContext {
+    def newNode[A <: Node](name: String)(implicit mf: Manifest[A]): NodeRef
 
-    def existingNode(name: String): NodeRef
+    def getNode[A <: Node](name: String)(implicit mf: Manifest[A]): NodeRef
   }
 
   trait NodeRef {

@@ -53,7 +53,8 @@ lazy val job = (project in file("job")).
     version := "0.1.0",
     libraryDependencies ++= Seq(
       scalaTest,
-      slf4jApi
+      slf4jApi,
+      logback
     )
   ).
   dependsOn(commons)
