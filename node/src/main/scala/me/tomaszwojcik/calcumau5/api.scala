@@ -1,11 +1,13 @@
 package me.tomaszwojcik.calcumau5
 
+import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
+
 import scala.concurrent.Future
 
 object api {
 
   trait Node {
-    var ctx: NodeContext = new NodeContextImpl
+    val ctx: NodeContext = new NodeContextImpl
     var sender: NodeRef = _
 
     def receive: PartialFunction[AnyRef, Unit]
@@ -18,9 +20,11 @@ object api {
   }
 
   trait NodeContext {
-    def newNode[A <: Node](name: String)(implicit mf: Manifest[A]): NodeRef
+    def create[A <: Node](nodeID: String)(implicit mf: Manifest[A]): NodeRef
 
-    def getNode[A <: Node](name: String)(implicit mf: Manifest[A]): NodeRef
+    def getLocal(nodeID: String): NodeRef
+
+    def getRemote(nodeID: String, serverID: String): NodeRef
   }
 
   trait NodeRef {
