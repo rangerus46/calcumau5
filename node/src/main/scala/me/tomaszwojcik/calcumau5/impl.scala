@@ -9,7 +9,7 @@ import scala.concurrent.{Future, Promise}
 object impl {
 
   class NodeContextImpl extends NodeContext {
-    var frameHandler: FrameHandler = new TempFrameHandler
+    var _frameHandler: FrameHandler = new TempFrameHandler
 
     override def create[A <: Node](nodeID: String)(implicit mf: Manifest[A]): NodeRef = {
       new NodeRefImpl(this, nodeID, serverID = None, Some(mf.runtimeClass), create = true)
@@ -23,12 +23,12 @@ object impl {
       new NodeRefImpl(this, nodeID, Some(serverID), clazz = None, create = false)
     }
 
-    def frameHandler_=(newHandler: FrameHandler): Unit = frameHandler.synchronized {
-      frameHandler match {
-        case oldHandler: TempFrameHandler => oldHandler.transferTo(newHandler)
+    def frameHandler_=(frameHandler: FrameHandler): Unit = _frameHandler.synchronized {
+      _frameHandler match {
+        case oldHandler: TempFrameHandler => oldHandler.transferTo(frameHandler)
         case _ =>
       }
-      this.frameHandler = newHandler
+      _frameHandler = frameHandler
     }
   }
 
@@ -39,13 +39,13 @@ object impl {
     val clazz: Option[Class[_]],
     val create: Boolean
   ) extends NodeRef {
-    override def tell(msg: AnyRef): Unit = ctx.frameHandler.synchronized {
-      ctx.frameHandler(TellFrame(this, msg))
+    override def tell(msg: AnyRef): Unit = ctx._frameHandler.synchronized {
+      ctx._frameHandler(TellFrame(this, msg))
     }
 
     override def ask(msg: AnyRef): Future[AnyRef] = {
       val promise = Promise[AnyRef]
-      ctx.frameHandler(AskFrame(this, msg, promise))
+      ctx._frameHandler(AskFrame(this, msg, promise))
       promise.future
     }
   }
