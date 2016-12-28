@@ -6,9 +6,9 @@ import io.netty.handler.timeout.{IdleState, IdleStateEvent}
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
-class ClientHandler extends SimpleChannelInboundHandler[String] with Logging {
+class ClientHandler extends SimpleChannelInboundHandler[AnyRef] with Logging {
 
-  override def channelRead0(ctx: ChannelHandlerContext, msg: String): Unit = {
+  override def channelRead0(ctx: ChannelHandlerContext, msg: AnyRef): Unit = {
     log.info("Received message: {}", msg)
   }
 
