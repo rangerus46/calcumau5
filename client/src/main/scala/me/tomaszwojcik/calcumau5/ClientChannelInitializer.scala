@@ -8,9 +8,10 @@ import io.netty.handler.logging.LoggingHandler
 import io.netty.handler.timeout.IdleStateHandler
 import me.tomaszwojcik.calcumau5.ClientConf.Tcp.{PingInterval, Timeout}
 import me.tomaszwojcik.calcumau5.Constants.Frame
+import me.tomaszwojcik.calcumau5.actions.{Action, Opts}
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class ClientChannelInitializer extends ChannelInitializer[SocketChannel] with Logging {
+class ClientChannelInitializer(action: Action, opts: Opts) extends ChannelInitializer[SocketChannel] with Logging {
 
   private val loggingHandler = new LoggingHandler
   private val idleStateHandler = new IdleStateHandler(Timeout.toSeconds.toInt, PingInterval.toSeconds.toInt, 0)
