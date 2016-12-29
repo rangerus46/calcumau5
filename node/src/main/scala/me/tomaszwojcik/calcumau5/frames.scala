@@ -14,4 +14,10 @@ object frames {
 
   case class AskFrame(ref: NodeRef, msg: AnyRef, promise: Promise[AnyRef]) extends Frame
 
+  case object Start extends Frame
+
+  case object Ping extends Frame
+
+  case object Pong extends Frame
+
 }

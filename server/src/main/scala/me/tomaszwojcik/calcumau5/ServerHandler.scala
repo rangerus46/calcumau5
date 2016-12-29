@@ -4,17 +4,16 @@ import java.net.InetSocketAddress
 
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
+import me.tomaszwojcik.calcumau5.frames.Frame
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
-class ServerHandler extends SimpleChannelInboundHandler[String] with Logging {
+class ServerHandler extends SimpleChannelInboundHandler[Frame] with Logging {
 
-  override def channelRead0(ctx: ChannelHandlerContext, msg: String): Unit = {
-    log.info("Received message: {}", msg)
-    if (msg == "PING") {
-      log.info("Sending message: {}", "PONG")
-      ctx.writeAndFlush("PONG")
-    }
+  override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
+    case frames.Ping => ctx.writeAndFlush(frames.Pong)
+    case frames.Pong => // ignore pongs
+    case _ => log.info("Received frame: {}", frame)
   }
 
   override def channelActive(ctx: ChannelHandlerContext): Unit = {

@@ -24,8 +24,8 @@ object Client extends Logging {
             .channel(classOf[NioSocketChannel])
             .handler(new ClientChannelInitializer(action, opts))
 
-          for (node <- ClientConf.Nodes) {
-            val f = bootstrap.connect(node.host, node.port).sync()
+          for (server <- ClientConf.Servers) {
+            val f = bootstrap.connect(server.host, server.port).sync()
             channelGroup.add(f.channel)
           }
 
