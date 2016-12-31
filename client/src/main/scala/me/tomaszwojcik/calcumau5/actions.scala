@@ -10,6 +10,6 @@ object actions {
 
   case object Upload extends Action
 
-  case object Start extends Action
+  case object Run extends Action
 
 }

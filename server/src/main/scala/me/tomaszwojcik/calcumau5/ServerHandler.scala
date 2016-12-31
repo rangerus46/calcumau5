@@ -4,8 +4,10 @@ import java.net.InetSocketAddress
 
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHandler}
+import me.tomaszwojcik.calcumau5.api.{Node, NodeRef}
 import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
 import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
+import me.tomaszwojcik.calcumau5.test.{PingNode, PongNode}
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
@@ -15,6 +17,20 @@ class ServerHandler
 
   var channel: Channel = _
   val nodes = Seq(new test.PongNode, new test.PingNode)
+
+  val pingNodeRef = new NodeRef {
+    // FIXME: for tests only
+    override def tell(msg: AnyRef) = frameHandler.apply(frames.Tell("ping-node", msg))
+
+    override def ask(msg: AnyRef) = ???
+  }
+
+  val pongNodeRef = new NodeRef {
+    // FIXME: for tests only
+    override def tell(msg: AnyRef) = frameHandler.apply(frames.Tell("pong-node", msg))
+
+    override def ask(msg: AnyRef) = ???
+  }
 
   val frameHandler: FrameHandler = { frame: Frame =>
     channel.writeAndFlush(frame)
@@ -47,8 +63,22 @@ class ServerHandler
   }
 
   private def handleTellFrame(frame: frames.Tell): Unit = {
-    for (node <- nodes if node.receive.isDefinedAt(frame)) {
-      node.receive(frame)
+    // TODO: routing frames to recipient nodes instead of all nodes
+    val msg = frame.msg
+
+    // FIXME: for tests only
+    nodes.filter(_.receive.isDefinedAt(msg)).foreach {
+      case node: PingNode => node.withSender(pongNodeRef)(_.receive(msg))
+      case node: PongNode => node.withSender(pingNodeRef)(_.receive(msg))
+    }
+  }
+
+  private implicit class RichNode(node: Node) {
+    def withSender[A](ref: NodeRef)(fn: Node => A): A = node synchronized {
+      node.sender = ref
+      val v = fn(node)
+      node.sender = null
+      v
     }
   }
 

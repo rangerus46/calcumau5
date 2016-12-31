@@ -1,13 +1,16 @@
 package me.tomaszwojcik.calcumau5.handler
 
 import io.netty.channel.ChannelHandler.Sharable
+import io.netty.channel.group.ChannelGroup
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.timeout.{IdleState, IdleStateEvent}
 import me.tomaszwojcik.calcumau5.frames
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
-abstract class BaseClientHandler extends SimpleChannelInboundHandler[frames.Frame] with Logging {
+abstract class BaseClientHandler(channels: ChannelGroup)
+  extends SimpleChannelInboundHandler[frames.Frame]
+    with Logging {
 
   override def channelRead0(ctx: ChannelHandlerContext, frame: frames.Frame): Unit = frame match {
     case frames.Ping => ctx.writeAndFlush(frames.Pong)
@@ -36,4 +39,9 @@ abstract class BaseClientHandler extends SimpleChannelInboundHandler[frames.Fram
 
     case _ =>
   }
+
+  override def channelActive(ctx: ChannelHandlerContext): Unit = {
+    channels.add(ctx.channel)
+  }
+
 }

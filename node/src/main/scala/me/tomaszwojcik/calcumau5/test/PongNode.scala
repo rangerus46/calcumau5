@@ -8,7 +8,9 @@ class PongNode extends Node with Logging {
 
   override def receive = {
     case "PING" =>
-      log.info("Received 'PING' message")
+      log.info("Received message: PING")
+
+      log.info("Sent message: PONG")
       sender.tell("PONG")
   }
 }

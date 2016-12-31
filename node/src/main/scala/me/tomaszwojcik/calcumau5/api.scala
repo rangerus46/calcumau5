@@ -7,12 +7,11 @@ import scala.concurrent.Future
 object api {
 
   trait Node {
+
     val ctx: NodeContext = new NodeContextImpl
     var sender: NodeRef = _
 
     def receive: PartialFunction[AnyRef, Unit]
-
-    def beforeStart(): Unit = {}
 
     def beforeStop(): Unit = {}
 

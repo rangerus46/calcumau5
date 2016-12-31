@@ -6,7 +6,7 @@ class ArgsParser(args: List[String]) {
 
   lazy val result: (Action, Opts) = args match {
     case "upload" :: tail => (actions.Upload, parseOpts(tail))
-    case "start" :: tail => (actions.Start, parseOpts(tail))
+    case "run" :: tail => (actions.Run, parseOpts(tail))
     case _ => (actions.Help, Map.empty)
   }
 
