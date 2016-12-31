@@ -1,7 +1,7 @@
 package me.tomaszwojcik.calcumau5
 
 import me.tomaszwojcik.calcumau5.api.{Node, NodeContext, NodeRef}
-import me.tomaszwojcik.calcumau5.frames.{AskFrame, Frame, FrameHandler, TellFrame}
+import me.tomaszwojcik.calcumau5.frames.{Ask, Frame, FrameHandler, Tell}
 
 import scala.collection.mutable
 import scala.concurrent.{Future, Promise}
@@ -9,7 +9,7 @@ import scala.concurrent.{Future, Promise}
 object impl {
 
   class NodeContextImpl extends NodeContext {
-    var _frameHandler: FrameHandler = new TempFrameHandler
+    var _handler: FrameHandler = new TempFrameHandler
 
     override def create[A <: Node](nodeID: String)(implicit mf: Manifest[A]): NodeRef = {
       new NodeRefImpl(this, nodeID, serverID = None, Some(mf.runtimeClass), create = true)
@@ -23,12 +23,12 @@ object impl {
       new NodeRefImpl(this, nodeID, Some(serverID), clazz = None, create = false)
     }
 
-    def frameHandler_=(frameHandler: FrameHandler): Unit = _frameHandler.synchronized {
-      _frameHandler match {
-        case oldHandler: TempFrameHandler => oldHandler.transferTo(frameHandler)
+    def swapHandler(handler: FrameHandler): Unit = _handler.synchronized {
+      _handler match {
+        case old: TempFrameHandler => old.transferTo(handler)
         case _ =>
       }
-      _frameHandler = frameHandler
+      _handler = handler
     }
   }
 
@@ -39,13 +39,13 @@ object impl {
     val clazz: Option[Class[_]],
     val create: Boolean
   ) extends NodeRef {
-    override def tell(msg: AnyRef): Unit = ctx._frameHandler.synchronized {
-      ctx._frameHandler(TellFrame(this, msg))
+    override def tell(msg: AnyRef): Unit = ctx._handler.synchronized {
+      ctx._handler(Tell(nodeID, msg))
     }
 
     override def ask(msg: AnyRef): Future[AnyRef] = {
       val promise = Promise[AnyRef]
-      ctx._frameHandler(AskFrame(this, msg, promise))
+      ctx._handler(Ask(nodeID, msg, promise))
       promise.future
     }
   }

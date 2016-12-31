@@ -13,8 +13,9 @@ class StartHandler
     ctx.writeAndFlush(frames.Start)
   }
 
-  override def channelRead1(ctx: ChannelHandlerContext, msg: frames.Frame): Unit = {
-    log.info("Received frame: {}", msg)
+  override def channelRead1(ctx: ChannelHandlerContext, frame: frames.Frame): Unit = frame match {
+    case tell: frames.Tell => log.info("Tell frame received: {}", tell)
+    case ask: frames.Ask => log.info("Ask frame received: {}", ask)
   }
 
 }
