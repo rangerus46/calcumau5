@@ -8,7 +8,7 @@ object frames {
 
   case class Message(fromID: String, toID: String, payload: AnyRef) extends Frame
 
-  case object Start extends Frame
+  case class Run(nodes: Map[String, String]) extends Frame
 
   case object Ping extends Frame
 

@@ -17,8 +17,10 @@ class RunHandler(channels: ChannelGroup)
   override def channelActive(ctx: ChannelHandlerContext): Unit = {
     super.channelActive(ctx)
 
-    log.info(s"Sent frame: ${frames.Start}")
-    ctx.writeAndFlush(frames.Start)
+    val nodes = ClientConf.Nodes.map { node => (node.id, node.className) }.toMap
+    val frame = frames.Run(nodes)
+    ctx.writeAndFlush(frame)
+    log.info(s"Sent frame: $frame")
   }
 
   override def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit = {

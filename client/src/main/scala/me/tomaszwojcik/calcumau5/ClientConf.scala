@@ -17,8 +17,8 @@ object ClientConf {
   val Nodes = config.getConfigList("nodes").asScala.toList.map { conf: Config =>
     val serverID = conf.getString("server")
     val server = Servers.find(_.id == serverID).get
-    val clazz: Class[_] = null
-    Node(conf.getString("id"), server, clazz)
+    val className = conf.getString("class")
+    Node(conf.getString("id"), server, className)
   }
 
   object Tcp {
@@ -26,7 +26,7 @@ object ClientConf {
     val PingInterval: Duration = config.getDuration("tcp.ping-interval")
   }
 
-  case class Node(id: String, server: Server, clazz: Class[_])
+  case class Node(id: String, server: Server, className: String)
 
   case class Server(id: String, host: String, port: Int)
 

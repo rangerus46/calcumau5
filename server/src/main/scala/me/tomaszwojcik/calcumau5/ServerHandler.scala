@@ -1,16 +1,17 @@
 package me.tomaszwojcik.calcumau5
 
 import java.io.{File, FileOutputStream}
-import java.net.InetSocketAddress
+import java.net.{InetSocketAddress, URLClassLoader}
 
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHandler}
 import me.tomaszwojcik.calcumau5.api.{Node, NodeRef}
-import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler, Message}
+import me.tomaszwojcik.calcumau5.exceptions.JarNotDeployedException
+import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
 import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
-import me.tomaszwojcik.calcumau5.test.{PingNode, PongNode}
 import me.tomaszwojcik.calcumau5.util.Logging
 
+import scala.collection.mutable
 import scala.concurrent.Future
 
 @Sharable
@@ -19,7 +20,7 @@ class ServerHandler
     with Logging {
 
   var channel: Channel = _
-  val nodes = Seq(new test.PongNode, new test.PingNode)
+  val nodesByID = new mutable.HashMap[String, Node]
 
   val activeJarFileLock = new Object
   var activeJarFile: File = _
@@ -30,16 +31,12 @@ class ServerHandler
     override def ask(msg: AnyRef): Future[AnyRef] = ???
   }
 
-  val pingNodeRef = new TestNodeRef(fromID = "ping-node", toID = "pong-node")
-
-  val pongNodeRef = new TestNodeRef(fromID = "pong-node", toID = "ping-node")
-
   val frameHandler: FrameHandler = { frame: Frame => channel.writeAndFlush(frame) }
 
   override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
     case frames.Ping => ctx.writeAndFlush(frames.Pong)
     case frames.Pong => // ignore pongs
-    case frames.Start => handleStartFrame()
+    case f: frames.Run => handleStartFrame(f)
     case f: frames.Message => handleMessageFrame(f)
     case f: frames.File => handleFileFrame(ctx, f)
     case _ => log.info("Received frame: {}", frame)
@@ -56,30 +53,37 @@ class ServerHandler
     log.info(s"Client at ${address.getHostString}:${address.getPort} closed the connection")
   }
 
-  private def handleStartFrame(): Unit = {
-    nodes.map(_.ctx).foreach {
-      case node: NodeContextImpl => node.swapHandler(frameHandler)
+  private def handleStartFrame(frame: frames.Run): Unit = activeJarFileLock synchronized {
+    if (activeJarFile == null) throw JarNotDeployedException()
+    nodesByID.clear()
+
+    val urls = Array(activeJarFile.toURI.toURL)
+    val classLoader = new URLClassLoader(urls, getClass.getClassLoader)
+
+    for ((id, className) <- frame.nodes) {
+      val c = classLoader.loadClass(className)
+      val instance = c.newInstance().asInstanceOf[Node]
+      nodesByID.put(id, instance)
+    }
+
+    nodesByID.mapValues(_.ctx).foreach {
+      case (id: String, ctx: NodeContextImpl) =>
+        val frameHandler = frameHandlerForNodeID(id)
+        ctx.swapHandler(frameHandler)
       case _ =>
     }
   }
 
-  private def handleMessageFrame(frame: Message): Unit = {
-    // TODO: routing frames to recipient nodes instead of all nodes
-    val msg = frame.payload
-
-    // FIXME: for tests only
-    nodes.filter(_.receive.isDefinedAt(msg)).foreach {
-      case node: PingNode => node.withSender(pongNodeRef)(_.receive(msg))
-      case node: PongNode => node.withSender(pingNodeRef)(_.receive(msg))
-    }
+  private def frameHandlerForNodeID(id: String): FrameHandler = {
+    case f: frames.Message => channel.writeAndFlush(f.copy(fromID = id))
+    case f: frames.Frame => channel.writeAndFlush(f)
   }
 
-  private implicit class RichNode(node: Node) {
-    def withSender[A](ref: NodeRef)(fn: Node => A): A = node synchronized {
-      node.sender = ref
-      val v = fn(node)
+  private def handleMessageFrame(frame: frames.Message): Unit = {
+    for (node <- nodesByID.find(_._1 == frame.toID).map(_._2)) {
+      node.sender = node.ctx.remoteNode(frame.fromID)
+      node.receive(frame.payload)
       node.sender = null
-      v
     }
   }
 

@@ -21,7 +21,7 @@ abstract class BaseClientHandler(channels: ChannelGroup)
 
   def channelRead1(ctx: ChannelHandlerContext, frame: frames.Frame): Unit
 
-  override def userEventTriggered(ctx: ChannelHandlerContext, evt: scala.Any): Unit = evt match {
+  override def userEventTriggered(ctx: ChannelHandlerContext, evt: Any): Unit = evt match {
 
     // Handle pauses in communication.
     case evt: IdleStateEvent => evt.state match {
@@ -32,7 +32,10 @@ abstract class BaseClientHandler(channels: ChannelGroup)
 
       // Fired when nothing was received from the server for some time.
       // Close the connection, since the server is not responding.
-      case IdleState.READER_IDLE => ctx.close()
+      case IdleState.READER_IDLE =>
+        val server = getServerAttr(ctx)
+        log.warn(s"Server ${server.id} at ${server.host}:${server.port} does not respond: closing connection")
+        ctx.close()
 
       case _ =>
 
