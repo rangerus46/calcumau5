@@ -10,8 +10,6 @@ import me.tomaszwojcik.calcumau5.util.Logging
 
 object Client extends Logging {
 
-  private val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(4)
-
   def main(args: Array[String]): Unit = {
     val parser = new ArgsParser(args.toList)
     parser.result match {
@@ -21,20 +19,27 @@ object Client extends Logging {
   }
 
   private def start(action: Action, opts: Opts): Unit = {
-    val channels = new DefaultChannelGroup(eventLoopGroup.next())
+    val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(4)
 
-    val bootstrap = new Bootstrap()
-      .group(eventLoopGroup)
-      .channel(classOf[NioSocketChannel])
-      .handler(new ClientChannelInitializer(action, opts, channels))
+    try {
+      val channels = new DefaultChannelGroup(eventLoopGroup.next())
 
-    for (server <- ClientConf.Servers) {
-      bootstrap
-        .attr(ClientConstants.ServerAttr, server)
-        .connect(server.host, server.port).sync()
+      val bootstrap = new Bootstrap()
+        .group(eventLoopGroup)
+        .channel(classOf[NioSocketChannel])
+        .handler(new ClientChannelInitializer(action, opts, channels))
+
+      for (server <- ClientConf.Servers) {
+        bootstrap
+          .attr(ClientConstants.ServerAttr, server)
+          .connect(server.host, server.port).sync()
+      }
+
+      val f = channels.newCloseFuture().sync()
+      f.group().close()
+    } finally {
+      eventLoopGroup.shutdownGracefully()
     }
-
-    channels.newCloseFuture().sync()
   }
 
 }
