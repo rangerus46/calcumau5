@@ -24,20 +24,18 @@ class RunHandler(channels: ChannelGroup)
   override def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit = {
     log.info("Received frame: {}", frame)
     frame match {
-      case f: frames.Tell => handleTell(ctx, f)
-      case f: frames.Ask => handleAsk(ctx, f)
+      case f: frames.Message => handleMessageFrame(ctx, f)
+      case _ =>
     }
   }
 
-  private def handleTell(ctx: ChannelHandlerContext, frame: frames.Tell): Unit = {
-    val recipient: Node = nodeByID(frame.nodeID)
-    val matcher = new NodeChannelMatcher(recipient)
+  private def handleMessageFrame(ctx: ChannelHandlerContext, frame: frames.Message): Unit = {
+    val to = nodeByID(frame.toID)
+    val matcher = new NodeChannelMatcher(to)
 
-    log.info(s"Sent frame: $frame to $recipient")
+    log.info(s"Sent frame: $frame to $to")
     channels.writeAndFlush(frame, matcher)
   }
-
-  private def handleAsk(ctx: ChannelHandlerContext, frame: frames.Ask): Unit = ???
 
   private def nodeByID(id: String): Node = {
     ClientConf.Nodes.find(_.id == id).getOrElse(throw NodeNotFoundException(id))

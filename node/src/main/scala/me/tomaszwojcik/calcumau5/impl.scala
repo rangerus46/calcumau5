@@ -1,27 +1,15 @@
 package me.tomaszwojcik.calcumau5
 
-import me.tomaszwojcik.calcumau5.api.{Node, NodeContext, NodeRef}
-import me.tomaszwojcik.calcumau5.frames.{Ask, Frame, FrameHandler, Tell}
+import me.tomaszwojcik.calcumau5.api.{NodeContext, NodeRef}
+import me.tomaszwojcik.calcumau5.frames._
 
 import scala.collection.mutable
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 
 object impl {
 
   class NodeContextImpl extends NodeContext {
     var _handler: FrameHandler = new TempFrameHandler
-
-    override def create[A <: Node](nodeID: String)(implicit mf: Manifest[A]): NodeRef = {
-      new NodeRefImpl(this, nodeID, serverID = None, Some(mf.runtimeClass), create = true)
-    }
-
-    override def getLocal(nodeID: String): NodeRef = {
-      new NodeRefImpl(this, nodeID, serverID = None, clazz = None, create = false)
-    }
-
-    override def getRemote(nodeID: String, serverID: String): NodeRef = {
-      new NodeRefImpl(this, nodeID, Some(serverID), clazz = None, create = false)
-    }
 
     def swapHandler(handler: FrameHandler): Unit = _handler.synchronized {
       _handler match {
@@ -30,24 +18,18 @@ object impl {
       }
       _handler = handler
     }
-  }
 
-  class NodeRefImpl(
-    val ctx: NodeContextImpl,
-    val nodeID: String,
-    val serverID: Option[String],
-    val clazz: Option[Class[_]],
-    val create: Boolean
-  ) extends NodeRef {
-    override def tell(msg: AnyRef): Unit = ctx._handler.synchronized {
-      ctx._handler(Tell(nodeID, msg))
+    override def remoteNode(nodeID: String): NodeRef = new RemoteNodeRef(nodeID)
+
+    class RemoteNodeRef(nodeID: String) extends NodeRef {
+      override def tell(msg: AnyRef): Unit = {
+        val frame = Message(fromID = null, toID = nodeID, payload = msg)
+        _handler.apply(frame)
+      }
+
+      override def ask(msg: AnyRef): Future[AnyRef] = ???
     }
 
-    override def ask(msg: AnyRef): Future[AnyRef] = {
-      val promise = Promise[AnyRef]
-      ctx._handler(Ask(nodeID, msg, promise))
-      promise.future
-    }
   }
 
   class TempFrameHandler extends FrameHandler {

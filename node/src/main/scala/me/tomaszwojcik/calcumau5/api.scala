@@ -7,7 +7,6 @@ import scala.concurrent.Future
 object api {
 
   trait Node {
-
     val ctx: NodeContext = new NodeContextImpl
     var sender: NodeRef = _
 
@@ -19,11 +18,7 @@ object api {
   }
 
   trait NodeContext {
-    def create[A <: Node](nodeID: String)(implicit mf: Manifest[A]): NodeRef
-
-    def getLocal(nodeID: String): NodeRef
-
-    def getRemote(nodeID: String, serverID: String): NodeRef
+    def remoteNode(nodeID: String): NodeRef
   }
 
   trait NodeRef {

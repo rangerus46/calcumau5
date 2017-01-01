@@ -25,6 +25,7 @@ class ClientChannelInitializer(action: Action, opts: Opts, channels: ChannelGrou
 
   private def clientHandler: ChannelHandler = action match {
     case Run => new RunHandler(channels)
+    case _ => ???
   }
 
   override def initChannel(ch: SocketChannel): Unit = {

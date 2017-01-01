@@ -5,10 +5,12 @@ import java.net.InetSocketAddress
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHandler}
 import me.tomaszwojcik.calcumau5.api.{Node, NodeRef}
-import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
+import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler, Message}
 import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
 import me.tomaszwojcik.calcumau5.test.{PingNode, PongNode}
 import me.tomaszwojcik.calcumau5.util.Logging
+
+import scala.concurrent.Future
 
 @Sharable
 class ServerHandler
@@ -18,29 +20,23 @@ class ServerHandler
   var channel: Channel = _
   val nodes = Seq(new test.PongNode, new test.PingNode)
 
-  val pingNodeRef = new NodeRef {
-    // FIXME: for tests only
-    override def tell(msg: AnyRef) = frameHandler.apply(frames.Tell("ping-node", msg))
+  class TestNodeRef(fromID: String, toID: String) extends NodeRef {
+    override def tell(msg: AnyRef): Unit = frameHandler.apply(frames.Message(fromID, toID, payload = msg))
 
-    override def ask(msg: AnyRef) = ???
+    override def ask(msg: AnyRef): Future[AnyRef] = ???
   }
 
-  val pongNodeRef = new NodeRef {
-    // FIXME: for tests only
-    override def tell(msg: AnyRef) = frameHandler.apply(frames.Tell("pong-node", msg))
+  val pingNodeRef = new TestNodeRef(fromID = "ping-node", toID = "pong-node")
 
-    override def ask(msg: AnyRef) = ???
-  }
+  val pongNodeRef = new TestNodeRef(fromID = "pong-node", toID = "ping-node")
 
-  val frameHandler: FrameHandler = { frame: Frame =>
-    channel.writeAndFlush(frame)
-  }
+  val frameHandler: FrameHandler = { frame: Frame => channel.writeAndFlush(frame) }
 
   override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
     case frames.Ping => ctx.writeAndFlush(frames.Pong)
     case frames.Pong => // ignore pongs
     case frames.Start => handleStartFrame()
-    case f: frames.Tell => handleTellFrame(f)
+    case f: frames.Message => handleMessageFrame(f)
     case _ => log.info("Received frame: {}", frame)
   }
 
@@ -62,9 +58,9 @@ class ServerHandler
     }
   }
 
-  private def handleTellFrame(frame: frames.Tell): Unit = {
+  private def handleMessageFrame(frame: Message): Unit = {
     // TODO: routing frames to recipient nodes instead of all nodes
-    val msg = frame.msg
+    val msg = frame.payload
 
     // FIXME: for tests only
     nodes.filter(_.receive.isDefinedAt(msg)).foreach {

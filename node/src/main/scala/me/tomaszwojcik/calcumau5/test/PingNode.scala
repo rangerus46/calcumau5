@@ -6,7 +6,7 @@ import me.tomaszwojcik.calcumau5.util.Logging
 class PingNode extends Node with Logging {
   log.info("Created new PingNode")
 
-  val pongNode = ctx.getRemote("pong-node", "s0")
+  val pongNode = ctx.remoteNode("pong-node")
 
   log.info("Sent message: PING")
   pongNode.tell("PING")
