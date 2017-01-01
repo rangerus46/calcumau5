@@ -18,9 +18,10 @@ class ClientChannelInitializer(action: Action, opts: Opts, channels: ChannelGrou
     with Logging {
 
   private val loggingHandler = new LoggingHandler
-  private val idleStateHandler = new IdleStateHandler(Timeout.toSeconds.toInt, PingInterval.toSeconds.toInt, 0)
   private val lengthFieldPrepender = new LengthFieldPrepender(4)
   private val objectEncoder = new ObjectEncoder
+
+  private def idleStateHandler = new IdleStateHandler(Timeout.toSeconds.toInt, PingInterval.toSeconds.toInt, 0)
 
   private def clientHandler: ChannelHandler = action match {
     case Run => new RunHandler(channels)
