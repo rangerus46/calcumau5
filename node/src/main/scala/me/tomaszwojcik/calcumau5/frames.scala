@@ -14,4 +14,6 @@ object frames {
 
   case object Pong extends Frame
 
+  case class File(bytes: Array[Byte]) extends Frame
+
 }

@@ -4,8 +4,9 @@ import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.group.ChannelGroup
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.timeout.{IdleState, IdleStateEvent}
-import me.tomaszwojcik.calcumau5.frames
+import me.tomaszwojcik.calcumau5.ClientConf.Server
 import me.tomaszwojcik.calcumau5.util.Logging
+import me.tomaszwojcik.calcumau5.{ClientConstants, frames}
 
 @Sharable
 abstract class BaseClientHandler(channels: ChannelGroup)
@@ -40,8 +41,12 @@ abstract class BaseClientHandler(channels: ChannelGroup)
     case _ =>
   }
 
-  override def channelActive(ctx: ChannelHandlerContext): Unit = {
-    channels.add(ctx.channel)
+  override def channelActive(ctx: ChannelHandlerContext): Unit = channels.add(ctx.channel)
+
+  def getServerAttr(ctx: ChannelHandlerContext): Server = {
+    val channel = ctx.channel()
+    val attr = channel.attr(ClientConstants.ServerAttr)
+    attr.get()
   }
 
 }

@@ -1,5 +1,6 @@
 package me.tomaszwojcik.calcumau5
 
+import java.io.{File, FileOutputStream}
 import java.net.InetSocketAddress
 
 import io.netty.channel.ChannelHandler.Sharable
@@ -20,6 +21,9 @@ class ServerHandler
   var channel: Channel = _
   val nodes = Seq(new test.PongNode, new test.PingNode)
 
+  val activeJarFileLock = new Object
+  var activeJarFile: File = _
+
   class TestNodeRef(fromID: String, toID: String) extends NodeRef {
     override def tell(msg: AnyRef): Unit = frameHandler.apply(frames.Message(fromID, toID, payload = msg))
 
@@ -37,6 +41,7 @@ class ServerHandler
     case frames.Pong => // ignore pongs
     case frames.Start => handleStartFrame()
     case f: frames.Message => handleMessageFrame(f)
+    case f: frames.File => handleFileFrame(ctx, f)
     case _ => log.info("Received frame: {}", frame)
   }
 
@@ -75,6 +80,18 @@ class ServerHandler
       val v = fn(node)
       node.sender = null
       v
+    }
+  }
+
+  private def handleFileFrame(ctx: ChannelHandlerContext, frame: frames.File): Unit = activeJarFileLock synchronized {
+    val file = File.createTempFile(s"node-${System.nanoTime()}", ".jar")
+    val os = new FileOutputStream(file)
+    try {
+      log.info(s"Set deployed JAR to: ${file.getPath}")
+      os.write(frame.bytes)
+      activeJarFile = file
+    } finally {
+      os.close()
     }
   }
 

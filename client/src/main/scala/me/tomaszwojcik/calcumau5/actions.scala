@@ -8,7 +8,7 @@ object actions {
 
   case object Help extends Action
 
-  case object Upload extends Action
+  case object Deploy extends Action
 
   case object Run extends Action
 
