@@ -1,9 +1,7 @@
 object messages {
 
-  case class Task(n: Long)
+  case class Task(start: BigDecimal, end: BigDecimal)
 
-  case class SubTask(startInclusive: Long, endExclusive: Long)
-
-  case class Result(value: Double)
+  case class Result(value: BigDecimal)
 
 }

@@ -1,6 +1,6 @@
 import me.tomaszwojcik.calcumau5.api.{Node, NodeRef}
 import me.tomaszwojcik.calcumau5.util.Logging
-import messages.{Result, SubTask}
+import messages.{Result, Task}
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -12,9 +12,9 @@ class PiParentNode extends Node with Logging {
     ctx.remoteNode("child-1")
   )
 
-  sendSubTasks(0, 1500000, children)
+  splitAndSend(Task(0, 100 * 1000 * 1000), children)
 
-  val partialSums = new mutable.ArrayBuffer[Double]
+  val partialSums = new mutable.ArrayBuffer[BigDecimal]
 
   override def receive = {
     case Result(value) =>
@@ -25,13 +25,13 @@ class PiParentNode extends Node with Logging {
       }
   }
 
-  @tailrec private def sendSubTasks(start: Int, end: Int, nodes: Seq[NodeRef]): Unit = {
-    if (start < end && nodes.nonEmpty) {
-      val rangeLength = (end - start) / nodes.length
-      val subTask = SubTask(start, start + rangeLength)
+  @tailrec private def splitAndSend(task: Task, nodes: Seq[NodeRef]): Unit = {
+    if (task.start < task.end && nodes.nonEmpty) {
+      val rangeLength = (task.end - task.start) / nodes.length
+      val subTask = task.copy(end = task.start + rangeLength)
       log.info("Sending sub task: {}", subTask)
-      nodes.head tell subTask
-      sendSubTasks(start + rangeLength, end, nodes.drop(1))
+      nodes.head.tell(subTask)
+      splitAndSend(task.copy(start = subTask.end), nodes.tail)
     }
   }
 
