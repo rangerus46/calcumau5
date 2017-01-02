@@ -6,7 +6,7 @@ object frames {
 
   sealed abstract class Frame
 
-  case class Message(fromID: String, toID: String, payload: AnyRef) extends Frame
+  case class Message(fromID: String, toID: String, payload: Array[Byte]) extends Frame
 
   case class Run(nodes: Map[String, String]) extends Frame
 

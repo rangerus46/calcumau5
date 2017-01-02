@@ -5,14 +5,13 @@ import java.net.{InetSocketAddress, URLClassLoader}
 
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHandler}
-import me.tomaszwojcik.calcumau5.api.{Node, NodeRef}
+import me.tomaszwojcik.calcumau5.api.Node
 import me.tomaszwojcik.calcumau5.exceptions.JarNotDeployedException
 import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
 import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
 import me.tomaszwojcik.calcumau5.util.Logging
 
 import scala.collection.mutable
-import scala.concurrent.Future
 
 @Sharable
 class ServerHandler
@@ -24,12 +23,7 @@ class ServerHandler
 
   val activeJarFileLock = new Object
   var activeJarFile: File = _
-
-  class TestNodeRef(fromID: String, toID: String) extends NodeRef {
-    override def tell(msg: AnyRef): Unit = frameHandler.apply(frames.Message(fromID, toID, payload = msg))
-
-    override def ask(msg: AnyRef): Future[AnyRef] = ???
-  }
+  var classLoader: URLClassLoader = _
 
   val frameHandler: FrameHandler = { frame: Frame => channel.writeAndFlush(frame) }
 
@@ -58,7 +52,7 @@ class ServerHandler
     nodesByID.clear()
 
     val urls = Array(activeJarFile.toURI.toURL)
-    val classLoader = new URLClassLoader(urls, getClass.getClassLoader)
+    classLoader = new URLClassLoader(urls, getClass.getClassLoader)
 
     for ((id, className) <- frame.nodes) {
       val c = classLoader.loadClass(className)
@@ -81,8 +75,11 @@ class ServerHandler
 
   private def handleMessageFrame(frame: frames.Message): Unit = {
     for (node <- nodesByID.find(_._1 == frame.toID).map(_._2)) {
+      val deserializer = new PayloadDeserializer(classLoader, frame)
+      val msg = deserializer.get
+
       node.sender = node.ctx.remoteNode(frame.fromID)
-      node.receive(frame.payload)
+      node.receive(msg)
       node.sender = null
     }
   }

@@ -58,3 +58,15 @@ lazy val node = (project in file("node")).
     )
   ).
   dependsOn(commons)
+
+lazy val exampleNode = (project in file("example-node")).
+  settings(commonSettings: _*).
+  settings(
+    name := "calcumau5-example-node",
+    version := "0.1.0",
+    libraryDependencies ++= Seq(
+      slf4jApi,
+      logback
+    )
+  ).
+  dependsOn(node)

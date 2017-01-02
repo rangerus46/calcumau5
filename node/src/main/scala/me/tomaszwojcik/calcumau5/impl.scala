@@ -1,5 +1,7 @@
 package me.tomaszwojcik.calcumau5
 
+import java.io.{ByteArrayOutputStream, ObjectOutputStream}
+
 import me.tomaszwojcik.calcumau5.api.{NodeContext, NodeRef}
 import me.tomaszwojcik.calcumau5.frames._
 
@@ -23,7 +25,13 @@ object impl {
 
     class RemoteNodeRef(nodeID: String) extends NodeRef {
       override def tell(msg: AnyRef): Unit = {
-        val frame = Message(fromID = null, toID = nodeID, payload = msg)
+        val baos = new ByteArrayOutputStream()
+
+        val oos = new ObjectOutputStream(baos)
+        oos.writeObject(msg)
+        oos.close()
+
+        val frame = Message(fromID = null, toID = nodeID, payload = baos.toByteArray)
         _handler.apply(frame)
       }
 

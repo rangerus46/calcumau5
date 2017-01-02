@@ -12,6 +12,8 @@
             <option value="$PROJECT_DIR$/client/project" />
             <option value="$PROJECT_DIR$/commons" />
             <option value="$PROJECT_DIR$/commons/project" />
+            <option value="$PROJECT_DIR$/example-node" />
+            <option value="$PROJECT_DIR$/example-node/project" />
             <option value="$PROJECT_DIR$/node" />
             <option value="$PROJECT_DIR$/node/project" />
             <option value="$PROJECT_DIR$/project" />
