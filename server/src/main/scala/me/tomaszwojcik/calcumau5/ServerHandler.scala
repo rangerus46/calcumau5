@@ -52,6 +52,8 @@ class ServerHandler
     nodesByID.clear()
 
     val urls = Array(activeJarFile.toURI.toURL)
+
+    if (classLoader != null) classLoader.close()
     classLoader = new URLClassLoader(urls, getClass.getClassLoader)
 
     for ((id, className) <- frame.nodes) {

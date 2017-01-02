@@ -17,10 +17,16 @@ class RunHandler(channels: ChannelGroup)
   override def channelActive(ctx: ChannelHandlerContext): Unit = {
     super.channelActive(ctx)
 
-    val nodes = ClientConf.Nodes.map { node => (node.id, node.className) }.toMap
-    val frame = frames.Run(nodes)
-    ctx.writeAndFlush(frame)
-    log.info(s"Sent frame: $frame")
+    // Find nodes that have to be created on this server.
+    val server = getServerAttr(ctx)
+    val nodes = ClientConf.Nodes.filter(_.server == server)
+
+    if (nodes.nonEmpty) {
+      val classNamesByNodeID = nodes.map(n => (n.id, n.className)).toMap
+      val frame = frames.Run(nodes = classNamesByNodeID)
+      ctx.writeAndFlush(frame)
+      log.info(s"Sent frame: $frame")
+    }
   }
 
   override def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit = {
