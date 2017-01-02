@@ -24,22 +24,28 @@ object Client extends Logging {
   private def start(action: Action, opts: Opts): Unit = {
     val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(4)
 
-    val channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE)
+    try {
 
-    val bootstrap = new Bootstrap()
-      .group(eventLoopGroup)
-      .channel(classOf[NioSocketChannel])
-      .handler(new ClientChannelInitializer(action, opts, channels))
-      .option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE)
+      val channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE)
 
-    for (server <- ClientConf.Servers) {
-      bootstrap
-        .attr(ClientConstants.ServerAttr, server)
-        .connect(server.host, server.port)
-        .sync()
+      val bootstrap = new Bootstrap()
+        .group(eventLoopGroup)
+        .channel(classOf[NioSocketChannel])
+        .handler(new ClientChannelInitializer(action, opts, channels))
+        .option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE)
+
+      for (server <- ClientConf.Servers) {
+        bootstrap
+          .attr(ClientConstants.ServerAttr, server)
+          .connect(server.host, server.port)
+          .sync()
+      }
+
+      channels.newCloseFuture().sync()
+    } finally {
+      log.info("Gracefully shutting down...")
+      eventLoopGroup.shutdownGracefully()
     }
-
-    channels.newCloseFuture().sync()
   }
 
 }
