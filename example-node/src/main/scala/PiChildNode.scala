@@ -16,5 +16,6 @@ class PiChildNode extends Node with Logging {
       sender.tell(result)
 
       log.info(s"Sent $result")
+      ctx.die()
   }
 }

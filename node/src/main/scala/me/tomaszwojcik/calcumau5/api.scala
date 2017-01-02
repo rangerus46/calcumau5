@@ -19,6 +19,8 @@ object api {
 
   trait NodeContext {
     def remoteNode(nodeID: String): NodeRef
+
+    def die(): Unit
   }
 
   trait NodeRef {

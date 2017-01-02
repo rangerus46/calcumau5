@@ -80,9 +80,11 @@ class ServerHandler
       val deserializer = new PayloadDeserializer(classLoader, frame)
       val msg = deserializer.get
 
-      node.sender = node.ctx.remoteNode(frame.fromID)
-      node.receive(msg)
-      node.sender = null
+      node synchronized {
+        node.sender = node.ctx.remoteNode(frame.fromID)
+        node.receive(msg)
+        node.sender = null
+      }
     }
   }
 

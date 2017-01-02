@@ -16,11 +16,12 @@ class PiParentNode extends Node with Logging {
 
   val partialSums = new mutable.ArrayBuffer[Double]
 
-  override def receive: PartialFunction[AnyRef, Unit] = partialSums synchronized {
+  override def receive = {
     case Result(value) =>
       partialSums += value
       if (partialSums.size >= children.size) {
         log.info(s"Result: ${partialSums.sum}")
+        ctx.die()
       }
   }
 

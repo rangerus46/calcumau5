@@ -32,10 +32,15 @@ object impl {
         oos.close()
 
         val frame = Message(fromID = null, toID = nodeID, payload = baos.toByteArray)
-        _handler.apply(frame)
+
+        _handler.synchronized(_handler.apply(frame))
       }
 
       override def ask(msg: AnyRef): Future[AnyRef] = ???
+    }
+
+    override def die(): Unit = _handler.synchronized {
+      _handler.apply(frames.Disconnect)
     }
 
   }
