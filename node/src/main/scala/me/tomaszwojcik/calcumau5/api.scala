@@ -1,14 +1,19 @@
 package me.tomaszwojcik.calcumau5
 
-import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
+import me.tomaszwojcik.calcumau5.impl.ContextImpl
 
 import scala.concurrent.Future
 
 object api {
 
   trait Node {
-    val ctx: NodeContext = new NodeContextImpl
-    var sender: NodeRef = _
+    private val contextImpl = new ContextImpl
+
+    def ctx: Context = contextImpl
+
+    def sender: NodeRef = contextImpl.sender
+
+    def self: NodeRef = contextImpl.self
 
     def receive: PartialFunction[AnyRef, Unit]
 
@@ -17,16 +22,16 @@ object api {
     def afterStop(): Unit = {}
   }
 
-  trait NodeContext {
+  trait Context {
     def remoteNode(nodeID: String): NodeRef
 
     def die(): Unit
   }
 
   trait NodeRef {
-    def tell(msg: AnyRef): Unit
+    def !(msg: AnyRef): Unit
 
-    def ask(msg: AnyRef): Future[AnyRef]
+    def ?(msg: AnyRef): Future[AnyRef]
   }
 
 }

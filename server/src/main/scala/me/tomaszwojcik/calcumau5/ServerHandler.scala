@@ -6,12 +6,13 @@ import java.net.{InetSocketAddress, URLClassLoader}
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHandler}
 import me.tomaszwojcik.calcumau5.api.Node
+import me.tomaszwojcik.calcumau5.events.EventHandler
 import me.tomaszwojcik.calcumau5.exceptions.JarNotDeployedException
-import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
-import me.tomaszwojcik.calcumau5.impl.NodeContextImpl
+import me.tomaszwojcik.calcumau5.frames.Frame
+import me.tomaszwojcik.calcumau5.impl.ContextImpl
 import me.tomaszwojcik.calcumau5.util.Logging
 
-import scala.collection.mutable
+import scala.annotation.tailrec
 
 @Sharable
 class ServerHandler
@@ -19,19 +20,19 @@ class ServerHandler
     with Logging {
 
   var channel: Channel = _
-  val nodesByID = new mutable.HashMap[String, Node]
+  var nodeHolders: List[NodeHolder] = Nil
 
   val activeJarFileLock = new Object
   var activeJarFile: File = _
   var classLoader: URLClassLoader = _
 
-  val frameHandler: FrameHandler = { frame: Frame => channel.writeAndFlush(frame) }
+  val eventHandler: EventHandler = { evt => channel.pipeline.fireUserEventTriggered(evt) }
 
   override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
     case frames.Ping => ctx.writeAndFlush(frames.Pong)
     case frames.Pong => // ignore pongs
-    case f: frames.Run => handleStartFrame(f)
-    case f: frames.Message => handleMessageFrame(f)
+    case f: frames.Run => handleStartFrame(ctx, f)
+    case f: frames.Message => handleMessageFrame(ctx, f)
     case f: frames.File => handleFileFrame(ctx, f)
     case _ => log.info("Received frame: {}", frame)
   }
@@ -47,45 +48,37 @@ class ServerHandler
     log.info(s"Client at ${address.getHostString}:${address.getPort} closed the connection")
   }
 
-  private def handleStartFrame(frame: frames.Run): Unit = activeJarFileLock synchronized {
+  private def handleStartFrame(ctx: ChannelHandlerContext, frame: frames.Run): Unit = activeJarFileLock synchronized {
     if (activeJarFile == null) throw JarNotDeployedException()
-    nodesByID.clear()
+    if (classLoader != null) classLoader.close()
 
     val urls = Array(activeJarFile.toURI.toURL)
-
-    if (classLoader != null) classLoader.close()
     classLoader = new URLClassLoader(urls, getClass.getClassLoader)
 
-    for ((id, className) <- frame.nodes) {
-      val c = classLoader.loadClass(className)
-      val instance = c.newInstance().asInstanceOf[Node]
-      nodesByID.put(id, instance)
-    }
+    nodeHolders = createInstances(frame.nodes)
 
-    nodesByID.mapValues(_.ctx).foreach {
-      case (id: String, ctx: NodeContextImpl) =>
-        val frameHandler = frameHandlerForNodeID(id)
-        ctx.swapHandler(frameHandler)
-      case _ =>
-    }
-  }
-
-  private def frameHandlerForNodeID(id: String): FrameHandler = {
-    case f: frames.Message => channel.writeAndFlush(f.copy(fromID = id))
-    case f: frames.Frame => channel.writeAndFlush(f)
-  }
-
-  private def handleMessageFrame(frame: frames.Message): Unit = {
-    for (node <- nodesByID.find(_._1 == frame.toID).map(_._2)) {
-      val deserializer = new PayloadDeserializer(classLoader, frame)
-      val msg = deserializer.get
-
-      node synchronized {
-        node.sender = node.ctx.remoteNode(frame.fromID)
-        node.receive(msg)
-        node.sender = null
+    @tailrec def createInstances(nodes: Map[String, String], instances: List[NodeHolder] = Nil): List[NodeHolder] = {
+      nodes.headOption match {
+        case Some((id, className)) =>
+          val c = classLoader.loadClass(className)
+          val instance = c.newInstance().asInstanceOf[Node]
+          createInstances(nodes.tail, NodeHolder(id, instance) :: instances)
+        case None =>
+          instances
       }
     }
+
+    for (holder <- nodeHolders) {
+      val nodeCtx = holder.node.ctx.asInstanceOf[ContextImpl]
+      nodeCtx.init(new ReadyContextState(holder.id, eventHandler))
+    }
+
+  }
+
+  private def handleMessageFrame(ctx: ChannelHandlerContext, frame: frames.Message): Unit = {
+    val payload = Serializers.deserializePayload(frame.payload, classLoader)
+    val evt = events.InboundMessage(payload, frame.toID, frame.fromID)
+    ctx.pipeline.fireUserEventTriggered(evt)
   }
 
   private def handleFileFrame(ctx: ChannelHandlerContext, frame: frames.File): Unit = activeJarFileLock synchronized {
@@ -98,6 +91,20 @@ class ServerHandler
     } finally {
       os.close()
     }
+  }
+
+  override def userEventTriggered(ctx: ChannelHandlerContext, evt: AnyRef): Unit = evt match {
+    case events.InboundMessage(payload, to, _) => // TODO: set sender
+      for (node <- nodeHolders.find(_.id == to).map(_.node)) {
+        node.receive(payload)
+      }
+
+    case events.OutboundMessage(payload, to, from) =>
+      val frame = frames.Message(from, to, payload = Serializers.serializePayload(payload))
+      ctx.writeAndFlush(frame)
+
+    case _ =>
+      super.userEventTriggered(ctx, evt)
   }
 
 }

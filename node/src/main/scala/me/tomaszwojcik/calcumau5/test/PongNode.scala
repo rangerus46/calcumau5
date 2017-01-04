@@ -11,6 +11,6 @@ class PongNode extends Node with Logging {
       log.info("Received message: PING")
 
       log.info("Sent message: PONG")
-      sender.tell("PONG")
+      sender.!("PONG")
   }
 }

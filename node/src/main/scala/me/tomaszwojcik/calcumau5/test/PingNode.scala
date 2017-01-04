@@ -9,7 +9,7 @@ class PingNode extends Node with Logging {
   val pongNode = ctx.remoteNode("pong-node")
 
   log.info("Sent message: PING")
-  pongNode.tell("PING")
+  pongNode.!("PING")
 
   override def receive = {
     case "PONG" => log.info("Received message: PONG")
