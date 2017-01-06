@@ -9,13 +9,13 @@ import io.netty.handler.codec.serialization.{ClassResolvers, ObjectDecoder, Obje
 import io.netty.handler.codec.{LengthFieldBasedFrameDecoder, LengthFieldPrepender}
 import io.netty.handler.logging.LoggingHandler
 import io.netty.handler.timeout.IdleStateHandler
+import me.tomaszwojcik.calcumau5.ArgsParser.Opts
 import me.tomaszwojcik.calcumau5.ClientConf.Tcp.{PingInterval, Timeout}
 import me.tomaszwojcik.calcumau5.Constants.Frame
-import me.tomaszwojcik.calcumau5.actions.{Action, Opts}
 import me.tomaszwojcik.calcumau5.handler.{DeployHandler, RunHandler}
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class ClientChannelInitializer(action: Action, opts: Opts, channels: ChannelGroup)
+class ClientChannelInitializer(action: Symbol, opts: Opts, channels: ChannelGroup)
   extends ChannelInitializer[SocketChannel]
     with Logging {
 
@@ -26,8 +26,8 @@ class ClientChannelInitializer(action: Action, opts: Opts, channels: ChannelGrou
   private def idleStateHandler = new IdleStateHandler(Timeout.toSeconds.toInt, PingInterval.toSeconds.toInt, 0)
 
   private def clientHandler: ChannelHandler = action match {
-    case actions.Run => new RunHandler(channels)
-    case actions.Deploy =>
+    case 'run => new RunHandler(channels)
+    case 'deploy =>
       val path = opts.get("file").map(_.asInstanceOf[String]).map(Paths.get(_)).get
       new DeployHandler(channels, path)
     case _ => ???

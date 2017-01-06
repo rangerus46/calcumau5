@@ -6,7 +6,7 @@ import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.channel.{ChannelOption, EventLoopGroup}
 import io.netty.util.concurrent.GlobalEventExecutor
-import me.tomaszwojcik.calcumau5.actions.{Action, Opts}
+import me.tomaszwojcik.calcumau5.ArgsParser.Opts
 import me.tomaszwojcik.calcumau5.util.Logging
 
 object Client extends Logging {
@@ -14,12 +14,12 @@ object Client extends Logging {
   def main(args: Array[String]): Unit = {
     val parser = new ArgsParser(args.toList)
     parser.result match {
-      case (actions.Help, _) =>
-      case (action: Action, opts: Opts) => start(action, opts)
+      case ('help, _) =>
+      case (action, opts: Opts) => start(action, opts)
     }
   }
 
-  private def start(action: Action, opts: Opts): Unit = {
+  private def start(action: Symbol, opts: Opts): Unit = {
     val threadsToUse = Runtime.getRuntime.availableProcessors() * 3
     val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(threadsToUse)
     log.info(s"Using max $threadsToUse threads")
