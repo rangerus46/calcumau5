@@ -14,10 +14,6 @@ object api {
     def self: NodeRef = contextImpl.self
 
     def receive: PartialFunction[AnyRef, Unit]
-
-    def beforeStop(): Unit = {}
-
-    def afterStop(): Unit = {}
   }
 
   trait Context {
