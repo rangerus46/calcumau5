@@ -13,13 +13,13 @@ object Serializers {
 
   }
 
-  def serializePayload(payload: AnyRef): Array[Byte] = {
+  def serializeMsg(msg: AnyRef): Array[Byte] = {
     var os0: ByteArrayOutputStream = null
     var os1: ObjectOutputStream = null
     try {
       os0 = new ByteArrayOutputStream()
       os1 = new ObjectOutputStream(os0)
-      os1.writeObject(payload)
+      os1.writeObject(msg)
       os0.toByteArray
     } finally {
       if (os0 != null) os0.close()
@@ -27,7 +27,7 @@ object Serializers {
     }
   }
 
-  def deserializePayload(bytes: Array[Byte], classLoader: ClassLoader): AnyRef = {
+  def deserializeMsg(bytes: Array[Byte], classLoader: ClassLoader): AnyRef = {
     var is: ObjectInputStream = null
     try {
       is = new CustomObjectInputStream(classLoader, new ByteArrayInputStream(bytes))

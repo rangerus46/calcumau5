@@ -2,8 +2,6 @@ package me.tomaszwojcik.calcumau5
 
 import me.tomaszwojcik.calcumau5.impl.ContextImpl
 
-import scala.concurrent.Future
-
 object api {
 
   trait Node {
@@ -30,8 +28,6 @@ object api {
 
   trait NodeRef {
     def !(msg: AnyRef): Unit
-
-    def ?(msg: AnyRef): Future[AnyRef]
   }
 
 }

@@ -41,7 +41,7 @@ class RunHandler(channels: ChannelGroup)
   }
 
   private def handleMessageFrame(ctx: ChannelHandlerContext, frame: frames.Message): Unit = {
-    val to = nodeByID(frame.toID)
+    val to = nodeByID(frame.recipient)
     val matcher = new NodeChannelMatcher(to)
 
     log.info(s"Sent frame: $frame to $to")

@@ -8,7 +8,11 @@ import io.netty.handler.logging.LoggingHandler
 import me.tomaszwojcik.calcumau5.Constants.Frame
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class ServerChannelInitializer extends ChannelInitializer[SocketChannel] with Logging {
+import scala.concurrent.ExecutionContext
+
+class ServerChannelInitializer(implicit ec: ExecutionContext)
+  extends ChannelInitializer[SocketChannel]
+    with Logging {
 
   private val loggingHandler = new LoggingHandler
   private val lengthFieldPrepender = new LengthFieldPrepender(4)

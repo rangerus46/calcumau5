@@ -1,14 +1,16 @@
 package me.tomaszwojcik.calcumau5
 
+import me.tomaszwojcik.calcumau5.types.NodeID
+
 object frames {
 
   type FrameHandler = Frame => Unit
 
   sealed abstract class Frame
 
-  case class Message(fromID: String, toID: String, payload: Array[Byte]) extends Frame
+  case class Message(sender: NodeID, recipient: NodeID, msg: Array[Byte]) extends Frame
 
-  case class Run(nodes: Map[String, String]) extends Frame
+  case class Run(nodes: Map[NodeID, String]) extends Frame
 
   case object Ping extends Frame
 

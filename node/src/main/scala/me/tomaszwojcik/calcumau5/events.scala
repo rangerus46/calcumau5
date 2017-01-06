@@ -1,15 +1,29 @@
 package me.tomaszwojcik.calcumau5
 
+import me.tomaszwojcik.calcumau5.types.NodeID
+
 object events {
 
-  type EventHandler = Event => Unit
+  object inbound {
 
-  sealed abstract class Event
+    type InEvtHandler = InEvt => Unit
 
-  abstract class Message(payload: AnyRef, to: String, from: String) extends Event
+    sealed abstract class InEvt
 
-  case class InboundMessage(payload: AnyRef, to: String, from: String) extends Message(payload, to, from)
+    case class InMsg(msg: AnyRef, to: NodeID, from: NodeID) extends InEvt
 
-  case class OutboundMessage(payload: AnyRef, to: String, from: String) extends Message(payload, to, from)
+  }
+
+  object outbound {
+
+    type OutEvtHandler = OutEvt => Unit
+
+    sealed abstract class OutEvt
+
+    case class OutMsg(msg: AnyRef, to: NodeID) extends OutEvt
+
+    case class SelfMsg(msg: AnyRef) extends OutEvt
+
+  }
 
 }

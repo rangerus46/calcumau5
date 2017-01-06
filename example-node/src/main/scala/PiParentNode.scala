@@ -1,10 +1,13 @@
-import me.tomaszwojcik.calcumau5.api.{Node, NodeRef}
+import me.tomaszwojcik.calcumau5.api.Node
 import me.tomaszwojcik.calcumau5.util.Logging
 import messages.{Result, Task}
 
-import scala.annotation.tailrec
-
 class PiParentNode extends Node with Logging {
+
+  val numberOfTasks: Int = 1000
+  val taskLength: Int = 1000 * 1000 * 1000
+
+  var numberOfFinishedTasks: Int = 0
 
   val children = Seq(
     ctx.remoteNode("child-0"),
@@ -13,25 +16,21 @@ class PiParentNode extends Node with Logging {
     ctx.remoteNode("child-3")
   )
 
-  splitAndSend(Task(0, 100 * 1000 * 1000), children)
+  sendTasks(numberOfTasks, taskLength)
 
   var pi: BigDecimal = 0
 
   override def receive = {
     case Result(value) =>
+      numberOfFinishedTasks += 1
       pi += value
-      log.info(s"PI = $pi")
+      log.info(s"Progress: ${100.0 * numberOfFinishedTasks / numberOfTasks} PI = $pi")
   }
 
-  @tailrec private def splitAndSend(task: Task, nodes: Seq[NodeRef]): Unit = {
-    if (task.start < task.end && nodes.nonEmpty) {
-      val rangeLength = (task.end - task.start) / nodes.length
-      val subTask = task.copy(end = task.start + rangeLength)
-
-      nodes.head ! subTask
-      log.info(s"Sent $subTask")
-
-      splitAndSend(task.copy(start = subTask.end), nodes.tail)
+  private def sendTasks(n: Int, rangeLength: BigDecimal): Unit = {
+    for (i <- 0 until n) {
+      val node = children(i % children.length)
+      node ! Task(start = i * rangeLength, end = (i + 1) * rangeLength)
     }
   }
 

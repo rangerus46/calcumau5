@@ -1,42 +1,55 @@
 package me.tomaszwojcik.calcumau5
 
-import me.tomaszwojcik.calcumau5.api.{Context, NodeRef}
+import java.util.concurrent.LinkedBlockingQueue
 
-import scala.concurrent.Future
+import me.tomaszwojcik.calcumau5.api.{Context, NodeRef}
+import me.tomaszwojcik.calcumau5.events.inbound._
+import me.tomaszwojcik.calcumau5.events.outbound._
+import me.tomaszwojcik.calcumau5.types.NodeID
+
+import scala.collection.mutable
 
 object impl {
 
   class ContextImpl extends Context {
 
-    private var state: ContextState = new InitialContextState
+    val inEvts = new LinkedBlockingQueue[InEvt]
+
+    val outEvts = new mutable.Queue[OutEvt]
+
+    var outEvtHandler: Option[OutEvtHandler] = None
 
     // Refs
 
-    lazy val self = new NodeRef {
-      override def !(msg: AnyRef): Unit = state.sendToSelf(msg)
+    lazy val sender = new MutableNodeRef(this)
 
-      override def ?(msg: AnyRef): Future[AnyRef] = ???
-    }
+    lazy val self = new SelfNodeRef(this)
 
-    override def remoteNode(nodeID: String): NodeRef = new NodeRef {
-      override def !(msg: AnyRef): Unit = state.sendToRemote(msg, to = nodeID)
-
-      override def ?(msg: AnyRef): Future[AnyRef] = ???
-    }
-
-    def sender: NodeRef = ???
+    override def remoteNode(nodeID: NodeID): NodeRef = new RemoteNodeRef(this, nodeID)
 
     // Operations
 
     override def die(): Unit = ???
 
-    def init(state: ContextState): Unit = this.state match {
-      case s: InitialContextState =>
-        s.migrateTo(state)
-        this.state = state
-      case _ => throw new UnsupportedOperationException("Already initialized")
-    }
-
   }
+
+  class BaseNodeRef(ctx: ContextImpl, converter: AnyRef => OutEvt) extends NodeRef {
+    override def !(msg: AnyRef): Unit = {
+      val evt = converter.apply(msg)
+      ctx.outEvtHandler match {
+        case Some(handler) => handler.apply(evt)
+        case None => ctx.outEvts.enqueue(evt)
+      }
+    }
+  }
+
+  class SelfNodeRef(ctx: ContextImpl)
+    extends BaseNodeRef(ctx, msg => SelfMsg(msg))
+
+  class RemoteNodeRef(ctx: ContextImpl, nodeID: NodeID)
+    extends BaseNodeRef(ctx, msg => OutMsg(msg, nodeID))
+
+  class MutableNodeRef(ctx: ContextImpl, var nodeID: Option[NodeID] = None)
+    extends BaseNodeRef(ctx, msg => OutMsg(msg, nodeID.get))
 
 }
