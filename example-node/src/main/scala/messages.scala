@@ -4,4 +4,6 @@ object messages {
 
   case class Result(value: BigDecimal)
 
+  case object Stop
+
 }

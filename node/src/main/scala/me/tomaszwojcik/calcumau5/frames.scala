@@ -8,16 +8,16 @@ object frames {
 
   sealed abstract class Frame
 
-  case class Message(sender: NodeID, recipient: NodeID, msg: Array[Byte]) extends Frame
+  case class MsgFrame(sender: NodeID, recipient: NodeID, msg: Array[Byte]) extends Frame
 
-  case class Run(nodes: Map[NodeID, String]) extends Frame
+  case class RunFrame(nodes: Map[NodeID, String]) extends Frame
 
-  case object Ping extends Frame
+  case object PingFrame extends Frame
 
-  case object Pong extends Frame
+  case object PongFrame extends Frame
 
-  case object Disconnect extends Frame
+  case class FileFrame(bytes: Array[Byte]) extends Frame
 
-  case class File(bytes: Array[Byte]) extends Frame
+  case class LogFrame(s: String, from: NodeID) extends Frame
 
 }

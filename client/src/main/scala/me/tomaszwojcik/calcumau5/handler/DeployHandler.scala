@@ -5,8 +5,7 @@ import java.nio.file.{Files, Path}
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.group.ChannelGroup
 import io.netty.channel.{ChannelFuture, ChannelFutureListener, ChannelHandlerContext}
-import me.tomaszwojcik.calcumau5.frames
-import me.tomaszwojcik.calcumau5.frames.Frame
+import me.tomaszwojcik.calcumau5.frames.{FileFrame, Frame}
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
@@ -23,7 +22,7 @@ class DeployHandler(channels: ChannelGroup, jarPath: Path)
 
     log.info(s"Deploy to ${server.id}: started")
 
-    val frame = frames.File(jarBytes)
+    val frame = FileFrame(jarBytes)
 
     val f = ctx.writeAndFlush(frame)
 

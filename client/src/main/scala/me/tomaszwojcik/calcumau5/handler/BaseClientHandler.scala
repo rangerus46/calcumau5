@@ -5,21 +5,22 @@ import io.netty.channel.group.ChannelGroup
 import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.timeout.{IdleState, IdleStateEvent}
 import me.tomaszwojcik.calcumau5.ClientConf.Server
+import me.tomaszwojcik.calcumau5.ClientConstants
+import me.tomaszwojcik.calcumau5.frames.{Frame, PingFrame, PongFrame}
 import me.tomaszwojcik.calcumau5.util.Logging
-import me.tomaszwojcik.calcumau5.{ClientConstants, frames}
 
 @Sharable
 abstract class BaseClientHandler(channels: ChannelGroup)
-  extends SimpleChannelInboundHandler[frames.Frame]
+  extends SimpleChannelInboundHandler[Frame]
     with Logging {
 
-  override def channelRead0(ctx: ChannelHandlerContext, frame: frames.Frame): Unit = frame match {
-    case frames.Ping => ctx.writeAndFlush(frames.Pong)
-    case frames.Pong => // ignore pongs
+  override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
+    case PingFrame => ctx.writeAndFlush(PongFrame)
+    case PongFrame => // ignore pongs
     case _ => channelRead1(ctx, frame)
   }
 
-  def channelRead1(ctx: ChannelHandlerContext, frame: frames.Frame): Unit
+  def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit
 
   override def userEventTriggered(ctx: ChannelHandlerContext, evt: Any): Unit = evt match {
 
@@ -28,7 +29,7 @@ abstract class BaseClientHandler(channels: ChannelGroup)
 
       // Fired when nothing was written for some time.
       // Send a ping to ensure that the server is responding.
-      case IdleState.WRITER_IDLE => ctx.writeAndFlush(frames.Ping)
+      case IdleState.WRITER_IDLE => ctx.writeAndFlush(PingFrame)
 
       // Fired when nothing was received from the server for some time.
       // Close the connection, since the server is not responding.

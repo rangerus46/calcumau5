@@ -24,6 +24,8 @@ object api {
     def remoteNode(nodeID: String): NodeRef
 
     def die(): Unit
+
+    def log(msg: String): Unit
   }
 
   trait NodeRef {

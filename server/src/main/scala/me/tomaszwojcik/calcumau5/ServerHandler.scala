@@ -5,9 +5,8 @@ import java.net.{InetSocketAddress, URLClassLoader}
 
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHandler}
-import me.tomaszwojcik.calcumau5.events.inbound.InMsg
-import me.tomaszwojcik.calcumau5.exceptions.JarNotDeployedException
-import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
+import me.tomaszwojcik.calcumau5.events.inbound.InMsgEvt
+import me.tomaszwojcik.calcumau5.frames._
 import me.tomaszwojcik.calcumau5.node.NodeEnv
 import me.tomaszwojcik.calcumau5.util.Logging
 
@@ -29,11 +28,11 @@ class ServerHandler(implicit ec: ExecutionContext)
   val frameHandler: FrameHandler = { frame => channel.writeAndFlush(frame) }
 
   override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
-    case frames.Ping => ctx.writeAndFlush(frames.Pong)
-    case frames.Pong => // ignore pongs
-    case f: frames.Run => handleRunFrame(ctx, f)
-    case f: frames.Message => handleMessageFrame(ctx, f)
-    case f: frames.File => handleFileFrame(ctx, f)
+    case PingFrame => ctx.writeAndFlush(PongFrame)
+    case PongFrame => // ignore pongs
+    case f: RunFrame => handleRunFrame(ctx, f)
+    case f: MsgFrame => handleMessageFrame(ctx, f)
+    case f: FileFrame => handleFileFrame(ctx, f)
     case _ => log.info("Received frame: {}", frame)
   }
 
@@ -48,8 +47,8 @@ class ServerHandler(implicit ec: ExecutionContext)
     log.info(s"Client at ${address.getHostString}:${address.getPort} closed the connection")
   }
 
-  private def handleRunFrame(ctx: ChannelHandlerContext, frame: frames.Run): Unit = activeJarFileLock synchronized {
-    if (activeJarFile == null) throw JarNotDeployedException()
+  private def handleRunFrame(ctx: ChannelHandlerContext, frame: RunFrame): Unit = activeJarFileLock synchronized {
+    if (activeJarFile == null) throw new UnsupportedOperationException("JAR not deployed")
     if (classLoader != null) classLoader.close()
 
     val urls = Array(activeJarFile.toURI.toURL)
@@ -62,13 +61,13 @@ class ServerHandler(implicit ec: ExecutionContext)
     }
   }
 
-  private def handleMessageFrame(ctx: ChannelHandlerContext, frame: frames.Message): Unit = {
+  private def handleMessageFrame(ctx: ChannelHandlerContext, frame: MsgFrame): Unit = {
     val msg = Serializers.deserializeMsg(frame.msg, classLoader)
-    val evt = InMsg(msg, frame.recipient, frame.sender)
+    val evt = InMsgEvt(msg, frame.recipient, frame.sender)
     nodeEnv.pushEvent(evt)
   }
 
-  private def handleFileFrame(ctx: ChannelHandlerContext, frame: frames.File): Unit = activeJarFileLock synchronized {
+  private def handleFileFrame(ctx: ChannelHandlerContext, frame: FileFrame): Unit = activeJarFileLock synchronized {
     val file = File.createTempFile(s"node-${System.nanoTime()}", ".jar")
     val os = new FileOutputStream(file)
     try {

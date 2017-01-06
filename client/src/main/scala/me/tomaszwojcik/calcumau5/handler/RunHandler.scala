@@ -3,11 +3,11 @@ package me.tomaszwojcik.calcumau5.handler
 import io.netty.channel.ChannelHandler.Sharable
 import io.netty.channel.ChannelHandlerContext
 import io.netty.channel.group.ChannelGroup
+import me.tomaszwojcik.calcumau5.ClientConf
 import me.tomaszwojcik.calcumau5.ClientConf.Node
 import me.tomaszwojcik.calcumau5.exceptions.NodeNotFoundException
-import me.tomaszwojcik.calcumau5.frames.Frame
+import me.tomaszwojcik.calcumau5.frames.{Frame, LogFrame, MsgFrame, RunFrame}
 import me.tomaszwojcik.calcumau5.util.Logging
-import me.tomaszwojcik.calcumau5.{ClientConf, frames}
 
 @Sharable
 class RunHandler(channels: ChannelGroup)
@@ -23,27 +23,24 @@ class RunHandler(channels: ChannelGroup)
 
     if (nodes.nonEmpty) {
       val classNamesByNodeID = nodes.map(n => (n.id, n.className)).toMap
-      val frame = frames.Run(nodes = classNamesByNodeID)
+      val frame = RunFrame(nodes = classNamesByNodeID)
       ctx.writeAndFlush(frame)
     }
   }
 
   override def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit = {
     frame match {
-      case f: frames.Message => handleMessageFrame(ctx, f)
-      case frames.Disconnect => handleDisconnectFrame(ctx)
-      case _ =>
+      case msg: MsgFrame =>
+        val to = nodeByID(msg.recipient)
+        val matcher = new NodeChannelMatcher(to)
+        channels.writeAndFlush(frame, matcher)
+
+      case LogFrame(s, from) =>
+        log.info(s"[$from] $s")
+
+      case frame: Frame =>
+        log.warn(s"Unknown frame: $frame")
     }
-  }
-
-  private def handleMessageFrame(ctx: ChannelHandlerContext, frame: frames.Message): Unit = {
-    val to = nodeByID(frame.recipient)
-    val matcher = new NodeChannelMatcher(to)
-    channels.writeAndFlush(frame, matcher)
-  }
-
-  private def handleDisconnectFrame(ctx: ChannelHandlerContext): Unit = {
-    ctx.close()
   }
 
   private def nodeByID(id: String): Node = {

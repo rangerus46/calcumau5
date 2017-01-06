@@ -15,6 +15,9 @@ class PiChildNode extends Node with Logging {
       } else {
         calculateAndSend(start, end)
       }
+
+    case Stop =>
+      ctx.die()
   }
 
   def calculateAndSend(start: BigDecimal, end: BigDecimal): Unit = {

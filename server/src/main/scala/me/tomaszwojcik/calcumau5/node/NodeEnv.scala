@@ -1,13 +1,16 @@
 package me.tomaszwojcik.calcumau5.node
 
-import me.tomaszwojcik.calcumau5.api.Node
-import me.tomaszwojcik.calcumau5.events.inbound.{InEvt, InMsg}
-import me.tomaszwojcik.calcumau5.events.outbound.{OutEvtHandler, OutMsg, SelfMsg}
-import me.tomaszwojcik.calcumau5.frames.FrameHandler
-import me.tomaszwojcik.calcumau5.types.NodeID
-import me.tomaszwojcik.calcumau5.{Serializers, frames}
+import java.util.concurrent.ConcurrentHashMap
 
-import scala.collection.mutable
+import me.tomaszwojcik.calcumau5.Serializers
+import me.tomaszwojcik.calcumau5.api.Node
+import me.tomaszwojcik.calcumau5.events.DieEvt
+import me.tomaszwojcik.calcumau5.events.inbound.{InEvt, InMsgEvt}
+import me.tomaszwojcik.calcumau5.events.outbound._
+import me.tomaszwojcik.calcumau5.frames.{FrameHandler, LogFrame, MsgFrame}
+import me.tomaszwojcik.calcumau5.types.NodeID
+
+import scala.collection.JavaConversions._
 import scala.concurrent.ExecutionContext
 
 class NodeEnv(
@@ -15,35 +18,44 @@ class NodeEnv(
   frameHandler: FrameHandler,
   nodeDefs: Map[NodeID, String] = Map.empty) {
 
-  private val executionsByNodeID = new mutable.HashMap[NodeID, NodeExec]
+  private val execsByNodeID = new ConcurrentHashMap[NodeID, NodeExec]
 
   for ((id, className) <- nodeDefs) {
     val c = classLoader.loadClass(className).asSubclass(classOf[Node])
     val handler = outEvtHandlerForNode(id)
     val exec = new NodeExec(id, c, handler)
-    executionsByNodeID.put(id, exec)
+    execsByNodeID.put(id, exec)
   }
 
   def pushEvent: PartialFunction[InEvt, Unit] = {
-    case evt: InMsg => executionsByNodeID(evt.to).pushEvent(evt)
+    case evt: InMsgEvt => execsByNodeID.get(evt.to).pushEvent(evt)
   }
 
   def start()(implicit ec: ExecutionContext): Unit = {
-    for (exec <- executionsByNodeID.values) {
+    for (exec <- execsByNodeID.values()) {
       ec.execute(exec)
     }
   }
 
   def outEvtHandlerForNode(nodeID: NodeID): OutEvtHandler = {
-    case outMsg: OutMsg =>
-      val bytes = Serializers.serializeMsg(outMsg.msg)
-      val frame = frames.Message(nodeID, outMsg.to, bytes)
+    case OutMsgEvt(msg, to) =>
+      val bytes = Serializers.serializeMsg(msg)
+      val frame = MsgFrame(sender = nodeID, to, bytes)
       frameHandler.apply(frame)
 
     // Loopback for self messages.
-    case selfMsg: SelfMsg =>
-      val evt = InMsg(selfMsg.msg, nodeID, nodeID)
+    case SelfMsgEvt(msg) =>
+      val evt = InMsgEvt(msg, nodeID, nodeID)
       pushEvent(evt)
+
+    case DieEvt =>
+      val exec = execsByNodeID.remove(nodeID)
+      exec.pushEvent(DieEvt)
+
+    case LogEvt(s) =>
+      val frame = LogFrame(s, nodeID)
+      frameHandler.apply(frame)
+
   }
 
 }

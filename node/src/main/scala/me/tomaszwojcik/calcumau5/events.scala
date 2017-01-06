@@ -8,9 +8,9 @@ object events {
 
     type InEvtHandler = InEvt => Unit
 
-    sealed abstract class InEvt
+    sealed trait InEvt
 
-    case class InMsg(msg: AnyRef, to: NodeID, from: NodeID) extends InEvt
+    case class InMsgEvt(msg: AnyRef, to: NodeID, from: NodeID) extends InEvt
 
   }
 
@@ -18,12 +18,19 @@ object events {
 
     type OutEvtHandler = OutEvt => Unit
 
-    sealed abstract class OutEvt
+    sealed trait OutEvt
 
-    case class OutMsg(msg: AnyRef, to: NodeID) extends OutEvt
+    case class OutMsgEvt(msg: AnyRef, to: NodeID) extends OutEvt
 
-    case class SelfMsg(msg: AnyRef) extends OutEvt
+    case class SelfMsgEvt(msg: AnyRef) extends OutEvt
+
+    case class LogEvt(s: String) extends OutEvt
 
   }
+
+  import inbound._
+  import outbound._
+
+  case object DieEvt extends InEvt with OutEvt
 
 }
