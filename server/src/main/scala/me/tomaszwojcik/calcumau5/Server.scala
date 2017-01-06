@@ -6,7 +6,7 @@ import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
-import io.netty.channel.{ChannelInitializer, EventLoopGroup}
+import io.netty.channel.{ChannelInitializer, ChannelOption, EventLoopGroup}
 import me.tomaszwojcik.calcumau5.util.Logging
 
 import scala.concurrent.ExecutionContext
@@ -28,6 +28,7 @@ object Server extends Logging {
     .group(parentEventLoopGroup, childEventLoopGroup)
     .channel(classOf[NioServerSocketChannel])
     .childHandler(channelInitializer)
+    .option(ChannelOption.SO_KEEPALIVE, java.lang.Boolean.TRUE)
 
   def main(args: Array[String]): Unit = try {
     // Optionally print out an ascii art.

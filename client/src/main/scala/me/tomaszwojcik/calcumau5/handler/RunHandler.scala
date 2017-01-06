@@ -25,14 +25,10 @@ class RunHandler(channels: ChannelGroup)
       val classNamesByNodeID = nodes.map(n => (n.id, n.className)).toMap
       val frame = frames.Run(nodes = classNamesByNodeID)
       ctx.writeAndFlush(frame)
-      log.info(s"Sent frame: $frame")
     }
   }
 
   override def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit = {
-    val server = getServerAttr(ctx)
-    log.info(s"Received $frame from $server")
-
     frame match {
       case f: frames.Message => handleMessageFrame(ctx, f)
       case frames.Disconnect => handleDisconnectFrame(ctx)
@@ -43,8 +39,6 @@ class RunHandler(channels: ChannelGroup)
   private def handleMessageFrame(ctx: ChannelHandlerContext, frame: frames.Message): Unit = {
     val to = nodeByID(frame.recipient)
     val matcher = new NodeChannelMatcher(to)
-
-    log.info(s"Sent frame: $frame to $to")
     channels.writeAndFlush(frame, matcher)
   }
 

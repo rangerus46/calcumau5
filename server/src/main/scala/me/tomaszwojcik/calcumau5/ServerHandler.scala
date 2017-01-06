@@ -8,6 +8,7 @@ import io.netty.channel.{Channel, ChannelHandlerContext, SimpleChannelInboundHan
 import me.tomaszwojcik.calcumau5.events.inbound.InMsg
 import me.tomaszwojcik.calcumau5.exceptions.JarNotDeployedException
 import me.tomaszwojcik.calcumau5.frames.{Frame, FrameHandler}
+import me.tomaszwojcik.calcumau5.node.NodeEnv
 import me.tomaszwojcik.calcumau5.util.Logging
 
 import scala.concurrent.ExecutionContext
@@ -30,7 +31,7 @@ class ServerHandler(implicit ec: ExecutionContext)
   override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
     case frames.Ping => ctx.writeAndFlush(frames.Pong)
     case frames.Pong => // ignore pongs
-    case f: frames.Run => handleStartFrame(ctx, f)
+    case f: frames.Run => handleRunFrame(ctx, f)
     case f: frames.Message => handleMessageFrame(ctx, f)
     case f: frames.File => handleFileFrame(ctx, f)
     case _ => log.info("Received frame: {}", frame)
@@ -47,7 +48,7 @@ class ServerHandler(implicit ec: ExecutionContext)
     log.info(s"Client at ${address.getHostString}:${address.getPort} closed the connection")
   }
 
-  private def handleStartFrame(ctx: ChannelHandlerContext, frame: frames.Run): Unit = activeJarFileLock synchronized {
+  private def handleRunFrame(ctx: ChannelHandlerContext, frame: frames.Run): Unit = activeJarFileLock synchronized {
     if (activeJarFile == null) throw JarNotDeployedException()
     if (classLoader != null) classLoader.close()
 
@@ -76,6 +77,7 @@ class ServerHandler(implicit ec: ExecutionContext)
       activeJarFile = file
     } finally {
       os.close()
+      ctx.close()
     }
   }
 

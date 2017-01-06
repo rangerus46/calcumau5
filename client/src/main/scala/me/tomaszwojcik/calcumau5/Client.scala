@@ -1,9 +1,7 @@
 package me.tomaszwojcik.calcumau5
 
-import java.lang.Boolean
-
 import io.netty.bootstrap.Bootstrap
-import io.netty.channel.group.DefaultChannelGroup
+import io.netty.channel.group.{ChannelGroupFuture, ChannelGroupFutureListener, DefaultChannelGroup}
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.nio.NioSocketChannel
 import io.netty.channel.{ChannelOption, EventLoopGroup}
@@ -22,30 +20,35 @@ object Client extends Logging {
   }
 
   private def start(action: Action, opts: Opts): Unit = {
-    val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(4)
+    val threadsToUse = Runtime.getRuntime.availableProcessors() * 3
+    val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(threadsToUse)
+    log.info(s"Using max $threadsToUse threads")
 
-    try {
+    val channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE)
 
-      val channels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE)
+    val bootstrap = new Bootstrap()
+      .group(eventLoopGroup)
+      .channel(classOf[NioSocketChannel])
+      .handler(new ClientChannelInitializer(action, opts, channels))
+      .option(ChannelOption.SO_KEEPALIVE, java.lang.Boolean.TRUE)
 
-      val bootstrap = new Bootstrap()
-        .group(eventLoopGroup)
-        .channel(classOf[NioSocketChannel])
-        .handler(new ClientChannelInitializer(action, opts, channels))
-        .option(ChannelOption.SO_KEEPALIVE, Boolean.TRUE)
-
-      for (server <- ClientConf.Servers) {
-        bootstrap
-          .attr(ClientConstants.ServerAttr, server)
-          .connect(server.host, server.port)
-          .sync()
-      }
-
-      channels.newCloseFuture().sync()
-    } finally {
-      log.info("Gracefully shutting down...")
-      eventLoopGroup.shutdownGracefully()
+    for (server <- ClientConf.Servers) {
+      bootstrap
+        .attr(ClientConstants.ServerAttr, server)
+        .connect(server.host, server.port)
+        .sync()
     }
+
+    val f = channels.newCloseFuture()
+
+    f.addListener(new ChannelGroupFutureListener {
+      override def operationComplete(future: ChannelGroupFuture) = {
+        log.info("Gracefully shutting down...")
+        eventLoopGroup.shutdownGracefully()
+      }
+    })
+
+    f.sync()
   }
 
 }

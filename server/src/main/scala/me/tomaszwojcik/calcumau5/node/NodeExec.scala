@@ -8,7 +8,7 @@ import me.tomaszwojcik.calcumau5.impl.ContextImpl
 import me.tomaszwojcik.calcumau5.types.NodeID
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class NodeExecution(nodeID: NodeID, c: Class[_ <: api.Node], outEvtHandler: OutEvtHandler)
+class NodeExec(nodeID: NodeID, c: Class[_ <: api.Node], outEvtHandler: OutEvtHandler)
   extends Runnable
     with Logging {
 

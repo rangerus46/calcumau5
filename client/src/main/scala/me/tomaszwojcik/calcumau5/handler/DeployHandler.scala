@@ -25,14 +25,13 @@ class DeployHandler(channels: ChannelGroup, jarPath: Path)
 
     val frame = frames.File(jarBytes)
 
-    val listener = new ChannelFutureListener {
+    val f = ctx.writeAndFlush(frame)
+
+    f.addListener(new ChannelFutureListener {
       override def operationComplete(future: ChannelFuture) = {
         log.info(s"Deploy to ${server.id}: finished")
-        future.channel.close()
       }
-    }
-
-    ctx.writeAndFlush(frame).addListener(listener)
+    })
   }
 
   override def channelRead1(ctx: ChannelHandlerContext, frame: Frame): Unit = {}

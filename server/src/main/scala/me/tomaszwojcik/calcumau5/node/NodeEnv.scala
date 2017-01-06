@@ -1,11 +1,11 @@
-package me.tomaszwojcik.calcumau5
+package me.tomaszwojcik.calcumau5.node
 
 import me.tomaszwojcik.calcumau5.api.Node
 import me.tomaszwojcik.calcumau5.events.inbound.{InEvt, InMsg}
 import me.tomaszwojcik.calcumau5.events.outbound.{OutEvtHandler, OutMsg, SelfMsg}
 import me.tomaszwojcik.calcumau5.frames.FrameHandler
-import me.tomaszwojcik.calcumau5.node.NodeExecution
 import me.tomaszwojcik.calcumau5.types.NodeID
+import me.tomaszwojcik.calcumau5.{Serializers, frames}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -15,12 +15,12 @@ class NodeEnv(
   frameHandler: FrameHandler,
   nodeDefs: Map[NodeID, String] = Map.empty) {
 
-  private val executionsByNodeID = new mutable.HashMap[NodeID, NodeExecution]
+  private val executionsByNodeID = new mutable.HashMap[NodeID, NodeExec]
 
   for ((id, className) <- nodeDefs) {
     val c = classLoader.loadClass(className).asSubclass(classOf[Node])
     val handler = outEvtHandlerForNode(id)
-    val exec = new NodeExecution(id, c, handler)
+    val exec = new NodeExec(id, c, handler)
     executionsByNodeID.put(id, exec)
   }
 
