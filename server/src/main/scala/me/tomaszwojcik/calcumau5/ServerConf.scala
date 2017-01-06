@@ -10,4 +10,8 @@ object ServerConf {
     val Port: Int = config.getInt("tcp.port")
   }
 
+  object Threading {
+    val MaxThreads: Int = config.getInt("threading.max-threads")
+  }
+
 }

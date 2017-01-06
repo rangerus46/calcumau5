@@ -16,7 +16,7 @@ import scala.util.Try
 object Server extends Logging {
 
   implicit private val ec = {
-    val es = Executors.newFixedThreadPool(8)
+    val es = Executors.newFixedThreadPool(ServerConf.Threading.MaxThreads)
     ExecutionContext.fromExecutorService(es)
   }
 
