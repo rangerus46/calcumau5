@@ -6,7 +6,7 @@ import io.netty.channel.{ChannelHandlerContext, SimpleChannelInboundHandler}
 import io.netty.handler.timeout.{IdleState, IdleStateEvent}
 import me.tomaszwojcik.calcumau5.ClientConf.Server
 import me.tomaszwojcik.calcumau5.ClientConstants
-import me.tomaszwojcik.calcumau5.frames.{Frame, PingFrame, PongFrame}
+import me.tomaszwojcik.calcumau5.frames.{ErrorFrame, Frame, PingFrame, PongFrame}
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
@@ -15,8 +15,19 @@ abstract class BaseClientHandler(channels: ChannelGroup)
     with Logging {
 
   override def channelRead0(ctx: ChannelHandlerContext, frame: Frame): Unit = frame match {
-    case PingFrame => ctx.writeAndFlush(PongFrame)
-    case PongFrame => // ignore pongs
+    case PingFrame =>
+      ctx.writeAndFlush(PongFrame)
+
+    // ignore pongs
+    case PongFrame =>
+
+    case ErrorFrame(Some(nodeID), e) =>
+      log.error(s"Node $nodeID failed", e)
+
+    case ErrorFrame(None, e) =>
+      val server = getServerAttr(ctx)
+      log.error(s"Server ${server.id} failed", e)
+
     case _ => channelRead1(ctx, frame)
   }
 

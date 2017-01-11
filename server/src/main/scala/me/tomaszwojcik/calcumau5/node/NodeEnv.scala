@@ -7,7 +7,7 @@ import me.tomaszwojcik.calcumau5.api.Node
 import me.tomaszwojcik.calcumau5.events.DieEvt
 import me.tomaszwojcik.calcumau5.events.inbound.{InEvt, InMsgEvt}
 import me.tomaszwojcik.calcumau5.events.outbound._
-import me.tomaszwojcik.calcumau5.frames.{FrameHandler, LogFrame, MsgFrame}
+import me.tomaszwojcik.calcumau5.frames.{ErrorFrame, FrameHandler, LogFrame, MsgFrame}
 import me.tomaszwojcik.calcumau5.types.NodeID
 
 import scala.collection.JavaConversions._
@@ -54,6 +54,10 @@ class NodeEnv(
 
     case LogEvt(s) =>
       val frame = LogFrame(s, nodeID)
+      frameHandler.apply(frame)
+
+    case ErrorEvt(e) =>
+      val frame = ErrorFrame(Some(nodeID), e)
       frameHandler.apply(frame)
 
   }

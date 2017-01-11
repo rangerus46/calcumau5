@@ -20,4 +20,6 @@ object frames {
 
   case class LogFrame(s: String, from: NodeID) extends Frame
 
+  case class ErrorFrame(from: Option[NodeID], e: Exception) extends Frame
+
 }

@@ -80,4 +80,12 @@ class ServerHandler(implicit ec: ExecutionContext)
     }
   }
 
+  override def exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable): Unit = {
+    cause match {
+      case e: Exception => frameHandler.apply(ErrorFrame(None, e))
+      case _ =>
+    }
+    super.exceptionCaught(ctx, cause)
+  }
+
 }

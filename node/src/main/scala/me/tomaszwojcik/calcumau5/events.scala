@@ -26,6 +26,8 @@ object events {
 
     case class LogEvt(s: String) extends OutEvt
 
+    case class ErrorEvt(e: Exception) extends OutEvt
+
   }
 
   import inbound._
