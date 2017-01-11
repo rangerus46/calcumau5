@@ -22,5 +22,5 @@ class ArgsParser(args: List[String]) {
 }
 
 object ArgsParser {
-  type Opts = Map[Symbol, Any]
+  type Opts = Map[Symbol, String]
 }

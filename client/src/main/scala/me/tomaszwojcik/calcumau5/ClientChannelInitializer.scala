@@ -10,12 +10,11 @@ import io.netty.handler.codec.{LengthFieldBasedFrameDecoder, LengthFieldPrepende
 import io.netty.handler.logging.LoggingHandler
 import io.netty.handler.timeout.IdleStateHandler
 import me.tomaszwojcik.calcumau5.ArgsParser.Opts
-import me.tomaszwojcik.calcumau5.ClientConf.Tcp.{PingInterval, Timeout}
 import me.tomaszwojcik.calcumau5.Constants.Frame
 import me.tomaszwojcik.calcumau5.handler.{DeployHandler, RunHandler}
 import me.tomaszwojcik.calcumau5.util.Logging
 
-class ClientChannelInitializer(action: Symbol, opts: Opts, channels: ChannelGroup)
+class ClientChannelInitializer(action: Symbol, opts: Opts, channels: ChannelGroup)(implicit conf: ClientConf)
   extends ChannelInitializer[SocketChannel]
     with Logging {
 
@@ -23,12 +22,14 @@ class ClientChannelInitializer(action: Symbol, opts: Opts, channels: ChannelGrou
   private val lengthFieldPrepender = new LengthFieldPrepender(4)
   private val objectEncoder = new ObjectEncoder
 
-  private def idleStateHandler = new IdleStateHandler(Timeout.toSeconds.toInt, PingInterval.toSeconds.toInt, 0)
+  private def idleStateHandler = {
+    new IdleStateHandler(conf.Tcp.Timeout.toSeconds.toInt, conf.Tcp.PingInterval.toSeconds.toInt, 0)
+  }
 
   private def clientHandler: ChannelHandler = action match {
     case 'run => new RunHandler(channels)
     case 'deploy =>
-      val jarPath = opts.get('jar).map(_.asInstanceOf[String]).map(Paths.get(_)).get
+      val jarPath = opts.get('jar).map(Paths.get(_)).get
       new DeployHandler(channels, jarPath)
     case _ => ???
   }

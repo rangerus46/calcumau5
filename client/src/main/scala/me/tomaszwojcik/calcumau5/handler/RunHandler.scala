@@ -10,7 +10,7 @@ import me.tomaszwojcik.calcumau5.frames.{Frame, LogFrame, MsgFrame, RunFrame}
 import me.tomaszwojcik.calcumau5.util.Logging
 
 @Sharable
-class RunHandler(channels: ChannelGroup)
+class RunHandler(channels: ChannelGroup)(implicit conf: ClientConf)
   extends BaseClientHandler(channels)
     with Logging {
 
@@ -19,7 +19,7 @@ class RunHandler(channels: ChannelGroup)
 
     // Find nodes that have to be created on this server.
     val server = getServerAttr(ctx)
-    val nodes = ClientConf.Nodes.filter(_.server == server)
+    val nodes = conf.Nodes.filter(_.server == server)
 
     if (nodes.nonEmpty) {
       val classNamesByNodeID = nodes.map(n => (n.id, n.className)).toMap
@@ -44,7 +44,7 @@ class RunHandler(channels: ChannelGroup)
   }
 
   private def nodeByID(id: String): Node = {
-    ClientConf.Nodes.find(_.id == id).getOrElse(throw NodeNotFoundException(id))
+    conf.Nodes.find(_.id == id).getOrElse(throw NodeNotFoundException(id))
   }
 
 }

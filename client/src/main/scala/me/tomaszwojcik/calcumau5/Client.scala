@@ -13,13 +13,17 @@ object Client extends Logging {
 
   def main(args: Array[String]): Unit = {
     val parser = new ArgsParser(args.toList)
+
+    val configPath = parser.result._2.get('config)
+    implicit val conf = new ClientConf(configPath)
+
     parser.result match {
       case ('help, _) =>
       case (action, opts: Opts) => start(action, opts)
     }
   }
 
-  private def start(action: Symbol, opts: Opts): Unit = {
+  private def start(action: Symbol, opts: Opts)(implicit conf: ClientConf): Unit = {
     val threadsToUse = Runtime.getRuntime.availableProcessors() * 3
     val eventLoopGroup: EventLoopGroup = new NioEventLoopGroup(threadsToUse)
     log.info(s"Using max $threadsToUse threads")
@@ -32,7 +36,7 @@ object Client extends Logging {
       .handler(new ClientChannelInitializer(action, opts, channels))
       .option(ChannelOption.SO_KEEPALIVE, java.lang.Boolean.TRUE)
 
-    for (server <- ClientConf.Servers) {
+    for (server <- conf.Servers) {
       bootstrap
         .attr(ClientConstants.ServerAttr, server)
         .connect(server.host, server.port)
