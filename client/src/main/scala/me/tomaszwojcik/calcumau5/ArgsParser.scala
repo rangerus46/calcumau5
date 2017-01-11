@@ -2,6 +2,8 @@ package me.tomaszwojcik.calcumau5
 
 import me.tomaszwojcik.calcumau5.ArgsParser.Opts
 
+import scala.annotation.tailrec
+
 class ArgsParser(args: List[String]) {
 
   lazy val result: (Symbol, Opts) = args match {
@@ -10,9 +12,9 @@ class ArgsParser(args: List[String]) {
     case _ => ('help, Map.empty)
   }
 
-  private def parseOpts(args: List[String], opts: Opts = Map.empty): Opts = args match {
-    case "--config" :: path :: tail => parseOpts(tail, opts + ("config" -> path))
-    case "--file" :: path :: tail => parseOpts(tail, opts + ("file" -> path))
+  @tailrec private def parseOpts(args: List[String], opts: Opts = Map.empty): Opts = args match {
+    case "--config" :: path :: tail => parseOpts(tail, opts + ('config -> path))
+    case "--jar" :: path :: tail => parseOpts(tail, opts + ('jar -> path))
     case Nil => opts
     case _ :: tail => parseOpts(tail, opts)
   }
@@ -20,5 +22,5 @@ class ArgsParser(args: List[String]) {
 }
 
 object ArgsParser {
-  type Opts = Map[String, Any]
+  type Opts = Map[Symbol, Any]
 }

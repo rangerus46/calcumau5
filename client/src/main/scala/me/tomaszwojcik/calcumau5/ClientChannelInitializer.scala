@@ -28,8 +28,8 @@ class ClientChannelInitializer(action: Symbol, opts: Opts, channels: ChannelGrou
   private def clientHandler: ChannelHandler = action match {
     case 'run => new RunHandler(channels)
     case 'deploy =>
-      val path = opts.get("file").map(_.asInstanceOf[String]).map(Paths.get(_)).get
-      new DeployHandler(channels, path)
+      val jarPath = opts.get('jar).map(_.asInstanceOf[String]).map(Paths.get(_)).get
+      new DeployHandler(channels, jarPath)
     case _ => ???
   }
 
